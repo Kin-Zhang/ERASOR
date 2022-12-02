@@ -19,6 +19,14 @@ I modified a little, delete the livox code that no those extra driver dependence
   curl -sL https://raw.githubusercontent.com/Kin-Zhang/Kin-Zhang/main/Dockerfiles/setup_lib.sh | bash
   ```
 
+- [jsk-rviz: for visulization](https://github.com/jsk-ros-pkg/jsk_visualization)
+
+  ```bash
+  sudo apt-get install ros-$ROS_DISTRO-jsk-recognition ros-$ROS_DISTRO-jsk-common-msgs ros-$ROS_DISTRO-jsk-rviz-plugins
+  ```
+
+  
+
 git clone and build it
 
 ```bash
