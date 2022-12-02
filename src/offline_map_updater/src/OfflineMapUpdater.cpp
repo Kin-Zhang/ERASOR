@@ -1,5 +1,5 @@
 #include "erasor/OfflineMapUpdater.h"
-
+#include <glog/logging.h>
 using namespace erasor;
 
 OfflineMapUpdater::OfflineMapUpdater() {
@@ -258,11 +258,9 @@ void OfflineMapUpdater::callback_node(const erasor::node::ConstPtr &msg) {
 
         pub_debug_map_egocentric_.publish(erasor_utils::cloud2msg(*map_voi_));
         pub_debug_query_egocentric_.publish(erasor_utils::cloud2msg(*query_voi_));
-
         /**< 3. Conduct Scan Ratio Test & set map_static_estimate and map_egocentric_complement
          * Note that inputs should be previously transformed into egocentric frame */
         auto start = ros::Time::now().toSec();
-
         erasor_->set_inputs(*map_voi_, *query_voi_);
         if (erasor_version_ == 2) {
             erasor_->compare_vois_and_revert_ground(msg->header.seq);

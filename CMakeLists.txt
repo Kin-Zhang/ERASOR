@@ -2,7 +2,8 @@
 project(erasor)
 set(CMAKE_CONFIGURATION_TYPES "Release" CACHE STRING "" FORCE)
 add_compile_options(-std=c++17)
-
+find_package(glog)
+find_package(gflag)
 find_package(catkin REQUIRED COMPONENTS
     roscpp
     rospy
@@ -88,11 +89,11 @@ target_link_libraries(viz_kitti_map ${catkin_LIBRARIES})
 add_dependencies(viz_kitti_map erasor_generate_messages_cpp)
 
 add_executable(offline_map_updater src/offline_map_updater/main_kitti.cpp ${erasor_src})
-target_link_libraries(offline_map_updater ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
+target_link_libraries(offline_map_updater ${catkin_LIBRARIES} ${OpenCV_LIBRARIES} glog::glog)
 add_dependencies(offline_map_updater erasor_generate_messages_cpp)
 
 add_executable(main_in_your_env_ros src/offline_map_updater/main_in_your_env.cpp ${erasor_src})
-target_link_libraries(main_in_your_env_ros ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
+target_link_libraries(main_in_your_env_ros ${catkin_LIBRARIES} ${OpenCV_LIBRARIES} glog::glog)
 add_dependencies(main_in_your_env_ros erasor_generate_messages_cpp)
 
 add_executable(compare_map src/compare_map.cpp src/offline_map_updater/src/erasor_utils.cpp)

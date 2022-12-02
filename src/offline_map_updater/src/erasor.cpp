@@ -1,5 +1,5 @@
 #include "erasor/erasor.h"
-
+#include <glog/logging.h>
 using namespace std;
 
 ERASOR::ERASOR() {
@@ -614,11 +614,14 @@ void ERASOR::get_static_estimate(
         pcl::PointCloud<pcl::PointXYZI> &complement) {
     r_pod2pc(r_pod_selected, arranged);
     arranged += ground_viz;
-    if(ground_viz.size() != 0){
+    
+    if(ground_viz.size() == 0)
+        LOG(WARNING) << "The ground points size is zero, no ground seg this step";
+    else{
         sensor_msgs::PointCloud2 pc2_ground = erasor_utils::cloud2msg(ground_viz);
         pub_ground.publish(pc2_ground);
     }
-
+    
     complement = map_complement;
     sensor_msgs::PointCloud2 pc2_arranged       = erasor_utils::cloud2msg(arranged);
     sensor_msgs::PointCloud2 pc2_map_complement = erasor_utils::cloud2msg(complement);

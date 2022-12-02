@@ -1,3 +1,84 @@
+# ERASOR (config with [Simple_ndt_slam](https://github.com/Kin-Zhang/simple_ndt_slam))
+
+Effects in my own dataset Velodyne-16:
+
+![](img/ERASOR_effect.png)
+
+This ERASOR package, tested System Ubuntu 20.04
+
+## Dependences
+
+I modified a little, delete the livox code that no those extra driver dependences:
+
+- ROS noetic desktop-full, Ubuntu 20.04
+
+- glog, gflag: for debug, install it quickly with command here:
+
+  ```bash
+  # maybe need sudo if you are running it in your desktop
+  curl -sL https://raw.githubusercontent.com/Kin-Zhang/Kin-Zhang/main/Dockerfiles/setup_lib.sh | bash
+  ```
+
+git clone and build it
+
+```bash
+cd ~/workspace/ERASOR_ws/src
+git clone git@github.com:Kin-Zhang/ERASOR.git
+cd ..
+catkin build
+
+# select what terminal you use
+source devel/setup.zsh # source devel/setup.bash
+```
+
+
+## RUN IT!
+
+Odom from and previous step please check this repo: [Kin-Zhang/simple_ndt_slam](https://github.com/Kin-Zhang/simple_ndt_slam)
+
+1. First you need launch with rosbag record in launch files:
+
+   ```xml
+     <arg name="record_bag" default="/home/kin/bags/autoware/res_odom_lidar.bag" />
+     <node pkg="rosbag" type="record" name="bag_record" args="--output-name $(arg record_bag) /auto_odom /odom_lidar /tf" />
+   ```
+
+2. Then use the python scripts to extract the dataset, sorry I didn't with C++ :)
+
+   ```bash
+   python3 lidar_localizer_utils/extract_bag.py --bags-path "/home/kin/bags/autoware/res_odom_lidar.bag" --save-dir "/home/kin/bags/autoware/res_odom_lidar"
+   ```
+
+3. config files modifed here [config/your_own_env_vel16.yaml](config/your_own_env_vel16.yaml) Modifed all the dir path correct
+
+
+
+RUN IT!
+
+```bash
+catkin build
+# select what terminal you use
+source devel/setup.zsh # source devel/setup.bash
+roslaunch erasor run_erasor_in_your_env_vel16.launch
+```
+
+
+
+Effect Video Here:
+
+https://user-images.githubusercontent.com/35365764/205382532-4a6b89b3-f639-4685-bca0-d5867b4f9ea3.mp4
+
+
+
+
+
+---
+<details>
+  <summary>[Please check the official ERASOR repo or below origin read for more detail]</summary>
+
+
+
+
 # :rainbow: ERASOR (RA-L'21 with ICRA Option)
 
 Official page of [*"ERASOR: Egocentric Ratio of Pseudo Occupancy-based Dynamic Object Removal for Static 3D Point Cloud Map Building"*](https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=9361109), which is accepted by RA-L with ICRA'21 option 
@@ -60,7 +141,7 @@ cd ~/catkin_ws/src
 git clone https://github.com/LimHyungTae/ERASOR.git
 cd .. && catkin build erasor 
 ```
- 
+
 ### Python Setting
 - Our metric calculation for PR/RR code is implemented by python2.7
 - To run the python code, following pakages are necessary: [pypcd](https://github.com/dimatura/pypcd), [tqdm](https://github.com/tqdm/tqdm), [scikit-learn](https://scikit-learn.org/stable/), and [tabulate](https://pyneng.readthedocs.io/en/latest/book/12_useful_modules/tabulate.html)
@@ -70,7 +151,7 @@ pip install tqdm
 pip install scikit-learn
 pip install tabulate
 ```
- 
+
 ### Prepared dataset
 
 - Download the preprocessed KITTI data encoded into rosbag.
@@ -251,7 +332,7 @@ _____...
 
 * Next, launch `launch/run_erasor_in_your_env_vel16.launch` as follows:
 
- 
+
 ```
 roslaunch erasor run_erasor_in_your_env_vel16.launch
 ```
@@ -273,15 +354,16 @@ roslaunch erasor run_erasor_in_your_env_vel16.launch
 If you use our code or method in your work, please consider citing the following:
 
 	@article{lim2021erasor,
-    title={ERASOR: Egocentric Ratio of Pseudo Occupancy-Based Dynamic Object Removal for Static 3D Point Cloud Map Building},
-    author={Lim, Hyungtae and Hwang, Sungwon and Myung, Hyun},
-    journal={IEEE Robotics and Automation Letters},
-    volume={6},
-    number={2},
-    pages={2272--2279},
-    year={2021},
-    publisher={IEEE}
-    }
+	title={ERASOR: Egocentric Ratio of Pseudo Occupancy-Based Dynamic Object Removal for Static 3D Point Cloud Map Building},
+	author={Lim, Hyungtae and Hwang, Sungwon and Myung, Hyun},
+	journal={IEEE Robotics and Automation Letters},
+	volume={6},
+	number={2},
+	pages={2272--2279},
+	year={2021},
+	publisher={IEEE}
+	}
 
 
 
+</details>

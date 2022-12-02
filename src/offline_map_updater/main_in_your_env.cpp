@@ -6,10 +6,10 @@
 #include <boost/format.hpp>
 #include <cstdlib>
 #include <erasor/OfflineMapUpdater.h>
-
+#include <glog/logging.h>
 string DATA_DIR;
 int INTERVAL, INIT_IDX;
-float VOXEL_SIZE;
+float VOXEL_SIZE, SAVE_MAP_SIZE;
 bool STOP_FOR_EACH_FRAME;
 std::string filename = "/staticmap_via_erasor.pcd";
 
@@ -50,6 +50,7 @@ void load_all_poses(string txt, vector<Eigen::Matrix4f >& poses){
         Eigen::Matrix4f tf4x4_cam = Eigen::Matrix4f::Identity(); // Crucial!
         tf4x4_cam.block<3, 3>(0, 0) = q.toRotationMatrix();
         tf4x4_cam.block<3, 1>(0, 3) = ts.vector();
+
         Eigen::Matrix4f tf4x4_lidar = tf4x4_cam;
         
         poses.emplace_back(tf4x4_lidar);
@@ -66,6 +67,7 @@ int main(int argc, char **argv)
 
     nh.param<string>("/data_dir", DATA_DIR, "/");
     nh.param<float>("/voxel_size", VOXEL_SIZE, 0.075);
+    nh.param<float>("/save_map_resoluation", SAVE_MAP_SIZE, 0.01);
     nh.param<int>("/init_idx", INIT_IDX, 0);
     nh.param<int>("/interval", INTERVAL, 2);
     nh.param<bool>("/stop_for_each_frame", STOP_FOR_EACH_FRAME, false);
@@ -120,9 +122,9 @@ int main(int argc, char **argv)
         }
     }
 
-    updater.save_static_map(0.2);
+    updater.save_static_map(SAVE_MAP_SIZE);
 
-    cout<< "Static map building complete!" << endl;
+    LOG(INFO) << "Static map building complete!";
 
     return 0;
 }

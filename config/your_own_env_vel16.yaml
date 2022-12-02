@@ -16,18 +16,19 @@ erasor:
 
 
 MapUpdater:
-    data_name: "bongeunsa"
-    initial_map_path: "/media/shapelim/UX960NVMe1/deep_express/bongeunsa_dataset/dense_global_map.pcd"
+    data_name: "autoware"
+    initial_map_path: "/home/kin/bags/autoware/res_odom_lidar/origin_map.pcd"
     env: "outdoor"
-    save_path: "/media/shapelim/UX960NVMe1/deep_express/bongeunsa_dataset"
+    save_path: "/home/kin/bags/autoware/res_odom_lidar"
     query_voxel_size: 0.075
     map_voxel_size: 0.075 
     voxelization_interval: 2
     removal_interval: 2
 
 # For mapgen
-data_dir: "/media/shapelim/UX960NVMe1/deep_express/bongeunsa_dataset"
+data_dir: "/home/kin/bags/autoware/res_odom_lidar"
 voxel_size: 0.075
+save_map_resoluation: 0.00001
 init_idx: 130
 interval: 2
 tf:
