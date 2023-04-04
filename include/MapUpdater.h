@@ -16,6 +16,9 @@
 #include <glog/logging.h>
 #include <open3d/Open3D.h>
 #include <yaml-cpp/yaml.h>
+#include <pcl/io/pcd_io.h>
+#include <pcl/point_cloud.h>
+#include <pcl/point_types.h>
 
 namespace erasor {
 
@@ -43,7 +46,10 @@ class MapUpdater {
 
   YAML::Node yconfig;
   void setConfig();
-
+  void setRawMap(const pcl::PointCloud<pcl::PointXYZI>::Ptr& raw_map);
+  void run(const pcl::PointCloud<pcl::PointXYZI>::Ptr& single_pc);
+  void saveMap(const std::string& file_path);
+  
  private:
   Config cfg_;
 };

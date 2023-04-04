@@ -10,7 +10,6 @@
  */
 
 #include <glog/logging.h>
-#include <pcl/common/transforms.h>
 #include <pcl/io/pcd_io.h>
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
@@ -20,6 +19,7 @@
 #include <iostream>
 #include <string>
 
+#include "MapUpdater.h"
 #include "timer.h"
 
 int main(int argc, char** argv) {
@@ -29,23 +29,28 @@ int main(int argc, char** argv) {
     google::SetStderrLogging(google::INFO);
 
     if (argc != 3) {
-        LOG(ERROR) << "Usage: ./erasor_pcd [pcd_dir] [config_file]";
+        LOG(ERROR) << "Usage: ./erasor_pcd [pcd_folder] [config_file]";
         return 0;
     }
-    std::string pcd_dir = argv[1]; // we assume that rawmap is in pcd_dir.parent_path();
+    std::string pcd_parent = argv[1]; // we assume that rawmap is in pcd_parent;
     std::string config_file = argv[2];
 
+    // check if the config_file exists
+    if (!std::filesystem::exists(config_file)) {
+        LOG(ERROR) << "Config file does not exist: " << config_file;
+        return 0;
+    }
     erasor::MapUpdater map_updater(config_file);
 
     // load raw map
-    std::string rawmap_path = pcd_dir + "/rawmap.pcd";
+    std::string rawmap_path = pcd_parent + "/rawmap.pcd";
     pcl::PointCloud<pcl::PointXYZI>::Ptr rawmap(new pcl::PointCloud<pcl::PointXYZI>);
     pcl::io::loadPCDFile<pcl::PointXYZI>(rawmap_path, *rawmap);
     LOG(INFO) << "Raw map loaded, size: " << rawmap->size();
-
+    map_updater.setRawMap(rawmap);
     // load pcd files
     std::vector<std::string> filenames;
-    for (const auto & entry : std::filesystem::directory_iterator(std::filesystem::path(pcd_dir/"pcd"))) {
+    for (const auto & entry : std::filesystem::directory_iterator(std::filesystem::path(pcd_parent) / "pcd")) {
         filenames.push_back(entry.path().string());
     }
     for (const auto & filename : filenames) {
@@ -53,12 +58,17 @@ int main(int argc, char** argv) {
         if (filename.find(".pcd") == std::string::npos) {
             continue;
         }
-
+        // load pcd file
+        pcl::PointCloud<pcl::PointXYZI>::Ptr pcd(new pcl::PointCloud<pcl::PointXYZI>);
+        pcl::io::loadPCDFile<pcl::PointXYZI>(filename, *pcd);
         // TODO load pcd file in erasor and update static map
+        map_updater.run(pcd);
         LOG(INFO) << "Processing: " << filename;
+        break; // TODO
     }
     
     // TODO: save static map from ERASOR
-
+    map_updater.saveMap(pcd_parent + "/erasor_output.pcd");
+    LOG(INFO) << ANSI_GREEN << "Done!";
     return 0;
 }

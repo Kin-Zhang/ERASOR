@@ -36,4 +36,17 @@ void MapUpdater::setConfig(){
 
 
 }
+
+void MapUpdater::setRawMap(const pcl::PointCloud<pcl::PointXYZI>::Ptr& raw_map) {
+    // TODO
+}
+
+void MapUpdater::run(const pcl::PointCloud<pcl::PointXYZI>::Ptr& single_pc) {
+    // TODO
+}
+
+void MapUpdater::saveMap(const std::string& file_path) {
+    // TODO
+}
+
 }  // namespace erasor
