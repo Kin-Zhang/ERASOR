@@ -1,13 +1,13 @@
 /**
  * Copyright (C) 2022-now, RPL, KTH Royal Institute of Technology
- * MIT License
+ * Only this file in under MIT License
  * Author: Kin ZHANG (https://kin-zhang.github.io/)
  * Date: 2023-04-04 23:19
  * Description: No ROS version, speed up the process
  *
  * Please reference official ERASOR paper for more details
  * This modified version is for the purpose of benchmarking no ROS! speed up! by
- * Kin
+ * Kin, Reference the LICENSE file in origin repo.
  */
 
 #pragma once
@@ -15,43 +15,48 @@
 // function lib
 #include <glog/logging.h>
 #include <open3d/Open3D.h>
-#include <yaml-cpp/yaml.h>
 #include <pcl/io/pcd_io.h>
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
+#include <yaml-cpp/yaml.h>
+
+#include "ERASOR.h"
+#include "utils.h"
 
 namespace erasor {
 
+template <typename PointT>
 class MapUpdater {
  public:
   MapUpdater(const std::string config_file_path);
   virtual ~MapUpdater() = default;
-  struct Config {
-    /**< Parameters of MapUpdater*/
-    double query_voxel_size_;
-    double map_voxel_size_;
-    int removal_interval_;
-    int global_voxelization_period_;
-
-    /**< Params. of Volume of Interest (VoI) */
-    double max_range_;
-    int num_rings_, num_sectors_;
-    double min_h_, max_h_;
-    double th_bin_max_h, scan_ratio_threshold;
-
-    double submap_size_;
-    double submap_center_x_;
-    double submap_center_y_;
-  };
 
   YAML::Node yconfig;
   void setConfig();
-  void setRawMap(const pcl::PointCloud<pcl::PointXYZI>::Ptr& raw_map);
-  void run(const pcl::PointCloud<pcl::PointXYZI>::Ptr& single_pc);
-  void saveMap(const std::string& file_path);
+  void saveMap(std::string const& file_path);
+
+  void setRawMap(typename pcl::PointCloud<PointT>::Ptr const& raw_map);
+  void run(typename pcl::PointCloud<PointT>::Ptr const& single_pc);
   
+  benchmark::ERASOR erasor;
+
  private:
-  Config cfg_;
+  common::Config cfg_;
+  typename pcl::PointCloud<PointT>::Ptr query_voi_;
+  typename pcl::PointCloud<PointT>::Ptr map_voi_;
+  typename pcl::PointCloud<PointT>::Ptr map_outskirts_;
+  typename pcl::PointCloud<PointT>::Ptr map_arranged_;
+
+  /*** Outputs of ERASOR
+   * map_filtered_ = map_static_estimate + map_egocentric_complement
+   */
+  typename pcl::PointCloud<PointT>::Ptr map_static_estimate_;
+  typename pcl::PointCloud<PointT>::Ptr map_egocentric_complement_;
+  typename pcl::PointCloud<PointT>::Ptr map_filtered_;
+
+  void fetch_VoI(double x_criterion, double y_criterion,
+                 pcl::PointCloud<PointT>& query_pcd);
+                 
 };
 
 }  // namespace erasor

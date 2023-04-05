@@ -29,7 +29,7 @@ set(FUN_LIB Open3D::Open3D Eigen3::Eigen)
 # LIBRARIES #
 #############
 include_directories(include)
-add_library(dufo_lib SHARED src/MapUpdater.cpp)
+add_library(dufo_lib SHARED src/MapUpdater.cpp src/ERASOR.cpp)
 target_link_libraries(dufo_lib ${LOG_LIB} yaml-cpp ${FUN_LIB} ${PCL_LIBRARIES})
 
 ############

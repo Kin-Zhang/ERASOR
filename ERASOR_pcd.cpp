@@ -22,6 +22,10 @@
 #include "MapUpdater.h"
 #include "timer.h"
 
+
+using PointT = pcl::PointXYZI;
+// using PointT = pcl::PointXYZRGB;
+
 int main(int argc, char** argv) {
     google::InitGoogleLogging(argv[0]);
     google::InstallFailureSignalHandler();
@@ -40,35 +44,42 @@ int main(int argc, char** argv) {
         LOG(ERROR) << "Config file does not exist: " << config_file;
         return 0;
     }
-    erasor::MapUpdater map_updater(config_file);
+    erasor::MapUpdater<PointT> map_updater(config_file);
 
     // load raw map
-    std::string rawmap_path = pcd_parent + "/rawmap.pcd";
-    pcl::PointCloud<pcl::PointXYZI>::Ptr rawmap(new pcl::PointCloud<pcl::PointXYZI>);
-    pcl::io::loadPCDFile<pcl::PointXYZI>(rawmap_path, *rawmap);
+    std::string rawmap_path = pcd_parent + "/raw_map.pcd";
+    pcl::PointCloud<PointT>::Ptr rawmap(new pcl::PointCloud<PointT>);
+    pcl::io::loadPCDFile<PointT>(rawmap_path, *rawmap);
     LOG(INFO) << "Raw map loaded, size: " << rawmap->size();
     map_updater.setRawMap(rawmap);
-    // load pcd files
+
     std::vector<std::string> filenames;
     for (const auto & entry : std::filesystem::directory_iterator(std::filesystem::path(pcd_parent) / "pcd")) {
         filenames.push_back(entry.path().string());
     }
+
+
+    int cnt = 0, total = filenames.size();
+
     for (const auto & filename : filenames) {
-        // check if the file is pcd
-        if (filename.find(".pcd") == std::string::npos) {
+        if (filename.find(".pcd") == std::string::npos)
             continue;
-        }
-        // load pcd file
-        pcl::PointCloud<pcl::PointXYZI>::Ptr pcd(new pcl::PointCloud<pcl::PointXYZI>);
-        pcl::io::loadPCDFile<pcl::PointXYZI>(filename, *pcd);
-        // TODO load pcd file in erasor and update static map
+        // common::Timer total_t;
+        TIC;
+        pcl::PointCloud<PointT>::Ptr pcd(new pcl::PointCloud<PointT>);
+        pcl::io::loadPCDFile<PointT>(filename, *pcd);
+        TOC("read pcd", 1);
         map_updater.run(pcd);
-        LOG(INFO) << "Processing: " << filename;
-        break; // TODO
+        TOC("erasor run", 1);
+        std::ostringstream log_msg;
+        log_msg << "(" << cnt << "/" << total << ") Processing: " << filename;
+        LOG(INFO) << log_msg.str();
+        cnt++;
+        if(cnt>10)
+            break; // TODO
     }
     
-    // TODO: save static map from ERASOR
     map_updater.saveMap(pcd_parent + "/erasor_output.pcd");
-    LOG(INFO) << ANSI_GREEN << "Done!";
+    LOG(INFO) << ANSI_GREEN << "Done! " << ANSI_RESET << "Check the output in " << pcd_parent << "/erasor_output.pcd";
     return 0;
 }
