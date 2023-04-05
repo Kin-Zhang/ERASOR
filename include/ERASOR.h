@@ -17,6 +17,8 @@
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 
+#include <thread>
+
 #include "utils.h"
 
 #define INF 10000000000000.0
@@ -69,8 +71,11 @@ class ERASOR {
                   const pcl::PointCloud<pcl::PointXYZI>& query_voi);
   void compare_vois_and_revert_ground_w_block();
   void get_static_estimate(pcl::PointCloud<pcl::PointXYZI>& arranged,
+                           pcl::PointCloud<pcl::PointXYZI>& dynamic_pts,
                            pcl::PointCloud<pcl::PointXYZI>& complement);
+                           
   void setCenter(double x, double y, double z);
+
  private:
   pcl::PointCloud<pcl::PointXYZI> piecewise_ground_, non_ground_;
   pcl::PointCloud<pcl::PointXYZI> ground_pc_, non_ground_pc_;
@@ -78,7 +83,8 @@ class ERASOR {
   void extract_ground(pcl::PointCloud<pcl::PointXYZI>& src,
                       pcl::PointCloud<pcl::PointXYZI>& dst,
                       pcl::PointCloud<pcl::PointXYZI>& outliers);
-  bool is_dynamic_obj_close(R_POD& r_pod_selected, int r_target, int theta_target);
+  bool is_dynamic_obj_close(R_POD& r_pod_selected, int r_target,
+                            int theta_target);
   void extract_initial_seeds_(const pcl::PointCloud<pcl::PointXYZI>& p_sorted,
                               pcl::PointCloud<pcl::PointXYZI>& init_seeds);
   void estimate_plane_(const pcl::PointCloud<pcl::PointXYZI>& ground);
@@ -106,8 +112,10 @@ class ERASOR {
   double th_dist_d_, d_;
   double ring_size;
   double sector_size;
-  double center_x =0 , center_y=0, center_z=0;
+  double center_x = 0, center_y = 0, center_z = 0;
   pcl::PointCloud<pcl::PointXYZI> map_complement;
   pcl::PointCloud<pcl::PointXYZI> dynamic_viz;  // Visualized in pcs_v2!
+
+  std::mutex m_data;
 };
 }  // namespace benchmark

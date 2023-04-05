@@ -5,9 +5,20 @@ No ros version!
 
 pcd are enough to run this program. Need transformed and pose in VIEWPOINT. Please reference our dufomap benchmark for more detail.
 
-TODO refactor all the codes.... and add more comments.
+TODO add DUFOmap benchmark link Here!!!
+
+We will output all the scripts and dataset! Don't worry. We are working on it. [Daniel Duberg](https://github.com/danielduberg) and [Qingwen ZHANG](https://kin-zhang.github.io/)
 
 ## Install & Build
+
+Test computer and System:
+
+- Desktop setting: i9-12900KF, 64GB RAM, Swap 90GB, 1TB SSD
+- System setting: Ubuntu 20.04
+- Test Date: 2023/04/05
+- Modified Version commit: https://github.com/Kin-Zhang/ERASOR/tree/7528b6672091213f113d253e23d5857a33208dc6
+
+
 Dependencies:
 ### glog gflag (only for debug)
 glog gflag for debug only, will remove on release version
@@ -51,3 +62,32 @@ cmake .. && make
 ```
 ./erasor_run /home/kin/workspace/DUFOMap/data/KITTI_00 ../config/seq_00.yaml
 ```
+
+I recommend to run 5-10 frames first to check the result, then run the whole sequence. Like here:
+```
+./erasor_run /home/kin/workspace/DUFOMap/data/KITTI_00 ../config/seq_00.yaml 5
+```
+
+Timing print in my desktop setting:
+```bash
+(141/142) Processing: /home/kin/workspace/DUFOMap/data/KITTI_00/pcd/004530.pcd Time Cost: 1.2844s           
+ERASOR Timings:
+         Component              Total   Last    Mean    StDev    Min     Max     Steps
+        0. Read RawMap           0.22   0.2240  0.2240    nan   0.2240  0.2240       1
+        1. Fetch VoI            143.06  0.8902  1.0146  0.0764  0.8853  1.1815     141
+        2. Compare VoI          138.27  0.3425  0.9807  0.3563  0.1422  3.6560     141
+        3. Get StaticPts        33.51   0.0966  0.2377  0.0504  0.0966  0.5702     141
+        4. Write                 0.73   0.7319  0.7319    nan   0.7319  0.7319       1
+I20230405 23:13:17.319449 177500 ERASOR_pcd.cpp:112] Done! Check the output in /home/kin/workspace/DUFOMap/data/KITTI_00/erasor_output.pcd
+```
+
+## Demo
+
+You can use pcl_view to compare with gt under `/home/kin/workspace/DUFOMap/data/KITTI_00`, like this:
+```
+pcl_viewer -multiview 1 gt_cloud.pcd erasor_output.pcd
+```
+Or in CloudCompare:
+![](assets/imgs/example.png)
+
+**But DUFOMap is better** than ERASOR and fastest! please check our benchmark here [TODO](TODO)

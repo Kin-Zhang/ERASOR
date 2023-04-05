@@ -1,9 +1,22 @@
+
+/**
+ * Copyright (C) 2022-now, RPL, KTH Royal Institute of Technology
+ * Only this file in under MIT License
+ * Author: Kin ZHANG (https://kin-zhang.github.io/)
+ * Date: 2023-04-05 11:19
+ * Description: No ROS version, speed up the process
+ *
+ * Please reference official ERASOR paper for more details
+ * This modified version is for the purpose of benchmarking no ROS! speed up! by
+ * Kin, Reference the LICENSE file in origin repo.
+ */
+
 #include "ERASOR.h"
 
 #include <glog/logging.h>
+#include <omp.h>
 #include <pcl/common/centroid.h>
 
-#include "timer.h"
 namespace benchmark {
 
 ERASOR::ERASOR() {}
@@ -33,7 +46,6 @@ void ERASOR::setCenter(double x, double y, double z) {
  */
 void ERASOR::set_inputs(const pcl::PointCloud<pcl::PointXYZI> &map_voi,
                         const pcl::PointCloud<pcl::PointXYZI> &query_voi) {
-  TIC;
   clear(map_complement);
   for (int theta = 0; theta < cfg_.num_sectors_; ++theta) {
     for (int r = 0; r < cfg_.num_rings_; ++r) {
@@ -75,7 +87,7 @@ void ERASOR::setConfig(common::Config &cfg) {
 void ERASOR::pt2r_pod(const pcl::PointXYZI &pt, Bin &bin) {
   bin.is_occupied = true;
   bin.points.push_back(pt);
-  
+
   if (pt.z >= bin.max_h) {
     bin.max_h = pt.z;
     bin.x = pt.x;
@@ -87,11 +99,11 @@ void ERASOR::pt2r_pod(const pcl::PointXYZI &pt, Bin &bin) {
 }
 
 double ERASOR::xy2theta(const double &x, const double &y) {  // 0 ~ 2 * PI
-  
-  if ((y-center_y) >= 0) {
-    return atan2(y - center_y, x-center_x);  // 1, 2 quadrant
+
+  if ((y - center_y) >= 0) {
+    return atan2(y - center_y, x - center_x);  // 1, 2 quadrant
   } else {
-    return 2 * PI + atan2(y-center_y, x-center_x);  // 3, 4 quadrant
+    return 2 * PI + atan2(y - center_y, x - center_x);  // 3, 4 quadrant
   }
 }
 
@@ -145,6 +157,7 @@ void ERASOR::voi2r_pod(const pcl::PointCloud<pcl::PointXYZI> &src, R_POD &r_pod,
 void ERASOR::compare_vois_and_revert_ground_w_block() {
   dynamic_viz.points.clear();
 
+#pragma omp parallel for
   for (int theta = 0; theta < cfg_.num_sectors_; theta++) {
     for (int r = 0; r < cfg_.num_rings_; r++) {
       // Min. num of pts criteria.
@@ -205,7 +218,6 @@ void ERASOR::compare_vois_and_revert_ground_w_block() {
 
           if (!piecewise_ground_.empty()) piecewise_ground_.clear();
           if (!non_ground_.empty()) non_ground_.clear();
-
           extract_ground(bin_map.points, piecewise_ground_, non_ground_);
           r_pod_selected[r][theta].points += piecewise_ground_;
           dynamic_viz += non_ground_;
@@ -247,8 +259,10 @@ void ERASOR::extract_ground(pcl::PointCloud<pcl::PointXYZI> &src,
   // 1. remove_outliers;
   auto it = src_copy.points.begin();
   for (int i = 0; i < src_copy.points.size(); i++) {
-    if (src_copy.points[i].z < cfg_.min_h_) it++;
-    else break;
+    if (src_copy.points[i].z < cfg_.min_h_)
+      it++;
+    else
+      break;
   }
   src_copy.points.erase(src_copy.points.begin(), it);
 
@@ -299,16 +313,25 @@ void ERASOR::r_pod2pc(const R_POD &sc, pcl::PointCloud<pcl::PointXYZI> &pc) {
 }
 
 void ERASOR::get_static_estimate(pcl::PointCloud<pcl::PointXYZI> &arranged,
+                                 pcl::PointCloud<pcl::PointXYZI> &dynamic_pts,
                                  pcl::PointCloud<pcl::PointXYZI> &complement) {
+  // pcl::PointCloud<pcl::PointXYZI> arranged;
   r_pod2pc(r_pod_selected, arranged);
-  // replace intensity in arranged
-  for (auto &pt : arranged.points) {
-    pt.intensity = 0;
+  if(cfg_.replace_intensity){
+    // replace intensity in arranged
+    for (auto &pt : arranged.points) {
+      pt.intensity = 0;
+    }
+    for (auto &pt : dynamic_viz.points) {
+      pt.intensity = 1;
+    }
+    dynamic_pts += dynamic_viz;
+    // replace intensity in arranged
+    for (auto &pt : map_complement.points) {
+      pt.intensity = 0;
+    }
   }
-  for(auto &pt : dynamic_viz.points) {
-    pt.intensity = 1;
-  }
-  complement += dynamic_viz;
+  complement = map_complement;
 }
 
 void ERASOR::init(R_POD &r_pod) {
@@ -330,8 +353,7 @@ bool ERASOR::is_dynamic_obj_close(R_POD &r_pod_selected, int r_target,
                                   int theta_target) {
   // Set thetas
   std::vector<int> theta_candidates;
-  for (int j = theta_target - 1; j <= theta_target + 1;
-       j++) {
+  for (int j = theta_target - 1; j <= theta_target + 1; j++) {
     if (j < 0) {
       theta_candidates.push_back(j + cfg_.num_rings_);
     } else if (j >= cfg_.num_sectors_) {
@@ -353,7 +375,6 @@ bool ERASOR::is_dynamic_obj_close(R_POD &r_pod_selected, int r_target,
   }
   return false;
 }
-
 
 void ERASOR::estimate_plane_(const pcl::PointCloud<pcl::PointXYZI> &ground) {
   Eigen::Matrix3f cov;

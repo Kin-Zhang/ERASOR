@@ -10,7 +10,7 @@
  */
 #include <glog/logging.h>
 #include "MapUpdater.h"
-#include "timer.h"
+
 
 namespace erasor {
 template <typename PointT>
@@ -23,6 +23,7 @@ MapUpdater<PointT>::MapUpdater(const std::string config_file_path) {
 
     // reset
     map_static_estimate_.reset(new pcl::PointCloud<PointT>());
+    map_egocentric_complement_.reset(new pcl::PointCloud<pcl::PointXYZI>());
     map_staticAdynamic.reset(new pcl::PointCloud<PointT>());
     map_filtered_.reset(new pcl::PointCloud<PointT>());
 }
@@ -57,8 +58,10 @@ void MapUpdater<PointT>::setConfig(){
 template <typename PointT>
 void MapUpdater<PointT>::setRawMap(typename pcl::PointCloud<PointT>::Ptr const& raw_map) {
     // copy raw map to map_arranged
+    timing.start("0. Read RawMap  ");
     map_arranged_.reset(new pcl::PointCloud<PointT>());
     pcl::copyPointCloud(*raw_map, *map_arranged_);
+    timing.stop("0. Read RawMap  ");
 }
 
 
@@ -69,27 +72,25 @@ void MapUpdater<PointT>::run(typename pcl::PointCloud<PointT>::Ptr const& single
     float y_curr = single_pc->sensor_origin_[1];
     float z_curr = single_pc->sensor_origin_[2];
 
-    LOG(INFO) << "x_curr: " << x_curr << ", y_curr: " << y_curr;
-    TIC;
+    timing.start("1. Fetch VoI    ");
+    LOG_IF(INFO, cfg_.verbose_) << "x_curr: " << x_curr << ", y_curr: " << y_curr;
     fetch_VoI(x_curr, y_curr, *single_pc); // query_voi_ and map_voi_ are ready in the same world frame
-    TOC("fetch_VoI", cfg_.verbose_);
-    
-    // TRE;
+    timing.stop("1. Fetch VoI    ");
+
     LOG_IF(INFO, cfg_.verbose_) << "map voi size: " << map_voi_->size() << " query voi: " << query_voi_->size();
 
-    Eigen::Matrix4f pose = Eigen::Matrix4f::Identity();
-    pose(0, 3) = single_pc->sensor_origin_[0];
-    pose(1, 3) = single_pc->sensor_origin_[1];
-    pose(2, 3) = single_pc->sensor_origin_[2];
-    Eigen::Quaternionf q(single_pc->sensor_orientation_.w(), single_pc->sensor_orientation_.x(), single_pc->sensor_orientation_.y(), single_pc->sensor_orientation_.z());
-    pose.block<3, 3>(0, 0) = q.toRotationMatrix();
+    
     erasor.setCenter(x_curr, y_curr, z_curr);
     erasor.set_inputs(*map_voi_, *query_voi_);
+    timing.start("2. Compare VoI  ");
     erasor.compare_vois_and_revert_ground_w_block();
-    erasor.get_static_estimate(*map_static_estimate_, *map_staticAdynamic);
+    timing.stop("2. Compare VoI  ");
+    timing.start("3. Get StaticPts");
+    erasor.get_static_estimate(*map_static_estimate_, *map_staticAdynamic, *map_egocentric_complement_);
+    timing.stop("3. Get StaticPts");
     LOG_IF(INFO, cfg_.verbose_) << "Static pts num: " << map_static_estimate_->size();
 
-    *map_arranged_ = *map_static_estimate_;// + *map_staticAdynamic;
+    *map_arranged_ = *map_static_estimate_ + *map_outskirts_ + *map_egocentric_complement_;
 }
 template <typename PointT>
 void MapUpdater<PointT>::saveMap(std::string const& folder_path) {
@@ -98,7 +99,7 @@ void MapUpdater<PointT>::saveMap(std::string const& folder_path) {
         LOG(WARNING) << "map_static_estimate_ is empty, no map is saved";
         return;
     }
-    if (map_staticAdynamic->size() > 0){
+    if (map_staticAdynamic->size() > 0 && cfg_.replace_intensity){
         pcl::io::savePCDFileBinary(folder_path + "/erasor_output_whole.pcd", *map_staticAdynamic+*map_arranged_);
     }
     pcl::io::savePCDFileBinary(folder_path + "/erasor_output.pcd", *map_arranged_);
@@ -123,12 +124,14 @@ void MapUpdater<PointT>::fetch_VoI(
         }
 
         // find map voi
-        for (auto const &pt : map_arranged_->points) {
+        for (auto &pt : map_arranged_->points) {
             double dist_square = pow(pt.x - x_criterion, 2) + pow(pt.y - y_criterion, 2);
             if (dist_square < max_dist_square) {
                 map_voi_ -> points.emplace_back(pt);
             }
             else {
+                if(cfg_.replace_intensity)
+                    pt.intensity = 0;
                 map_outskirts_-> points.emplace_back(pt);
             }
         }

@@ -18,9 +18,7 @@
 #include <fstream>
 #include <iostream>
 #include <string>
-
 #include "MapUpdater.h"
-#include "timer.h"
 
 
 using PointT = pcl::PointXYZI;
@@ -38,7 +36,7 @@ int main(int argc, char** argv) {
     }
     std::string pcd_parent = argv[1]; // we assume that rawmap is in pcd_parent;
     std::string config_file = argv[2];
-    int cnt = 0, run_max = 1 ;
+    int cnt = 1, run_max = 1 ;
     // check if the config_file exists
     if (!std::filesystem::exists(config_file)) {
         LOG(ERROR) << "Config file does not exist: " << config_file;
@@ -63,15 +61,22 @@ int main(int argc, char** argv) {
     int total = filenames.size();
     if(argc>3){
         run_max = std::stoi(argv[3]);
-        if (run_max == 1) {
+        if (run_max == -1) {
             LOG(INFO) << "We will run all the frame in sequence, the total number is: " << total;
+            run_max = total+1;
         }
     }
-    TIC;
     for (const auto & filename : filenames) {
         std::ostringstream log_msg;
-        log_msg << "(" << cnt << "/" << total << ") Processing: " << filename;
-        LOG(INFO) << log_msg.str();
+        if(cnt>1){
+            log_msg << "(" << cnt << "/" << run_max << ") Processing: " << filename << " Time Cost: " 
+                << map_updater.timing.lastSeconds("1. Fetch VoI    ") 
+                + map_updater.timing.lastSeconds("2. Compare VoI  ") 
+                + map_updater.timing.lastSeconds("3. Get StaticPts") << "s";
+            std::string spaces(10, ' ');
+            log_msg << spaces;
+            std::cout << "\r" <<log_msg.str() << std::flush;
+        }
 
         if (filename.find(".pcd") == std::string::npos)
             continue;
@@ -79,14 +84,31 @@ int main(int argc, char** argv) {
         pcl::PointCloud<PointT>::Ptr pcd(new pcl::PointCloud<PointT>);
         pcl::io::loadPCDFile<PointT>(filename, *pcd);
         map_updater.run(pcd);
-        
         cnt++;
         if(cnt>run_max)
             break;
-        TOC("erasor run", 1);
     }
-    
+    map_updater.timing.start("4. Write        ");
     map_updater.saveMap(pcd_parent);
+    map_updater.timing.stop("4. Write        ");
+
+    // set print color
+	map_updater.timing.setColor("0. Read RawMap  ", ufo::Timing::boldYellowColor());
+	map_updater.timing.setColor("1. Fetch VoI    ", ufo::Timing::boldCyanColor());
+	map_updater.timing.setColor("2. Compare VoI  ", ufo::Timing::boldMagentaColor());
+	map_updater.timing.setColor("3. Get StaticPts", ufo::Timing::boldGreenColor());
+	map_updater.timing.setColor("4. Write        ", ufo::Timing::boldRedColor());
+	// timing.setColor("5. Write     ", ufo::Timing::boldBlueColor());
+
+	printf("\nERASOR Timings:\n");
+	printf("\t Component\t\tTotal\tLast\tMean\tStDev\t Min\t Max\t Steps\n");
+	for (auto const& tag : map_updater.timing.tags()) {
+		printf("\t%s%s\t%5.2f\t%5.4f\t%5.4f\t%5.4f\t%5.4f\t%5.4f\t%6lu%s\n",
+		       map_updater.timing.color(tag).c_str(), tag.c_str(), map_updater.timing.totalSeconds(tag),
+		       map_updater.timing.lastSeconds(tag), map_updater.timing.meanSeconds(tag), map_updater.timing.stdSeconds(tag),
+		       map_updater.timing.minSeconds(tag), map_updater.timing.maxSeconds(tag), map_updater.timing.numSamples(tag),
+		       ufo::Timing::resetColor());
+	}
     LOG(INFO) << ANSI_GREEN << "Done! " << ANSI_RESET << "Check the output in " << pcd_parent << "/erasor_output.pcd";
     return 0;
 }

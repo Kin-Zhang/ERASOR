@@ -22,6 +22,7 @@
 
 #include "ERASOR.h"
 #include "utils.h"
+#include "timing.hpp"
 
 namespace erasor {
 
@@ -39,7 +40,8 @@ class MapUpdater {
   void run(typename pcl::PointCloud<PointT>::Ptr const& single_pc);
   
   benchmark::ERASOR erasor;
-
+  ufo::Timing timing;
+  
  private:
   common::Config cfg_;
   typename pcl::PointCloud<PointT>::Ptr query_voi_;
@@ -53,6 +55,7 @@ class MapUpdater {
   typename pcl::PointCloud<PointT>::Ptr map_static_estimate_;
   typename pcl::PointCloud<PointT>::Ptr map_staticAdynamic;
   typename pcl::PointCloud<PointT>::Ptr map_filtered_;
+  typename pcl::PointCloud<PointT>::Ptr map_egocentric_complement_;
 
   void fetch_VoI(double x_criterion, double y_criterion,
                  pcl::PointCloud<PointT>& query_pcd);

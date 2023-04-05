@@ -37,3 +37,11 @@ target_link_libraries(dufo_lib ${LOG_LIB} yaml-cpp ${FUN_LIB} ${PCL_LIBRARIES})
 ############
 add_executable(erasor_run ERASOR_pcd.cpp)
 target_link_libraries(erasor_run dufo_lib ${PCL_LIBRARIES})
+
+find_package(OpenMP)
+if(OpenMP_CXX_FOUND)
+	# print message to show the version of OpenMP
+	message(STATUS "OpenMP found, version: ${OpenMP_CXX_VERSION_STRING}")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")
+    target_link_libraries(erasor_run OpenMP::OpenMP_CXX)
+endif()
