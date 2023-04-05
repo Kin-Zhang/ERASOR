@@ -9,7 +9,6 @@
  * This modified version is for the purpose of benchmarking no ROS! speed up! by Kin
  */
 #include <glog/logging.h>
-
 #include "MapUpdater.h"
 #include "timer.h"
 
@@ -24,7 +23,7 @@ MapUpdater<PointT>::MapUpdater(const std::string config_file_path) {
 
     // reset
     map_static_estimate_.reset(new pcl::PointCloud<PointT>());
-    map_egocentric_complement_.reset(new pcl::PointCloud<PointT>());
+    map_staticAdynamic.reset(new pcl::PointCloud<PointT>());
     map_filtered_.reset(new pcl::PointCloud<PointT>());
 }
 template <typename PointT>
@@ -35,8 +34,8 @@ void MapUpdater<PointT>::setConfig(){
     cfg_.global_voxelization_period_ = yconfig["MapUpdater"]["voxelization_interval"].as<int>();
 
     cfg_.max_range_ = yconfig["erasor"]["max_range"].as<double>();
-    cfg_.min_h_ = yconfig["erasor"]["min_h"].as<double>();
-    cfg_.max_h_ = yconfig["erasor"]["max_h"].as<double>();
+    cfg_.min_h_ = yconfig["erasor"]["min_h"].as<double>() - 1.73; // HARD CODE HERE
+    cfg_.max_h_ = yconfig["erasor"]["max_h"].as<double>() - 1.73; // HARD CODE HERE
     cfg_.num_rings_ = yconfig["erasor"]["num_rings"].as<int>();
     cfg_.num_sectors_ = yconfig["erasor"]["num_sectors"].as<int>();
     LOG(INFO) << "number of rings: " << cfg_.num_rings_ << ", number of sectors: " << cfg_.num_sectors_;
@@ -68,6 +67,8 @@ void MapUpdater<PointT>::run(typename pcl::PointCloud<PointT>::Ptr const& single
     // read pose in VIEWPOINT Field in pcd
     float x_curr = single_pc->sensor_origin_[0];
     float y_curr = single_pc->sensor_origin_[1];
+    float z_curr = single_pc->sensor_origin_[2];
+
     LOG(INFO) << "x_curr: " << x_curr << ", y_curr: " << y_curr;
     TIC;
     fetch_VoI(x_curr, y_curr, *single_pc); // query_voi_ and map_voi_ are ready in the same world frame
@@ -75,21 +76,32 @@ void MapUpdater<PointT>::run(typename pcl::PointCloud<PointT>::Ptr const& single
     
     // TRE;
     LOG_IF(INFO, cfg_.verbose_) << "map voi size: " << map_voi_->size() << " query voi: " << query_voi_->size();
-    erasor.set_inputs(*map_voi_, *query_voi_, x_curr, y_curr);
+
+    Eigen::Matrix4f pose = Eigen::Matrix4f::Identity();
+    pose(0, 3) = single_pc->sensor_origin_[0];
+    pose(1, 3) = single_pc->sensor_origin_[1];
+    pose(2, 3) = single_pc->sensor_origin_[2];
+    Eigen::Quaternionf q(single_pc->sensor_orientation_.w(), single_pc->sensor_orientation_.x(), single_pc->sensor_orientation_.y(), single_pc->sensor_orientation_.z());
+    pose.block<3, 3>(0, 0) = q.toRotationMatrix();
+    erasor.setCenter(x_curr, y_curr, z_curr);
+    erasor.set_inputs(*map_voi_, *query_voi_);
     erasor.compare_vois_and_revert_ground_w_block();
-    erasor.get_static_estimate(*map_static_estimate_, *map_egocentric_complement_);
+    erasor.get_static_estimate(*map_static_estimate_, *map_staticAdynamic);
     LOG_IF(INFO, cfg_.verbose_) << "Static pts num: " << map_static_estimate_->size();
 
-    *map_arranged_ = *map_static_estimate_ + *map_egocentric_complement_;
+    *map_arranged_ = *map_static_estimate_;// + *map_staticAdynamic;
 }
 template <typename PointT>
-void MapUpdater<PointT>::saveMap(std::string const& file_path) {
+void MapUpdater<PointT>::saveMap(std::string const& folder_path) {
     // save map_static_estimate_
     if (map_arranged_->size() == 0) {
         LOG(WARNING) << "map_static_estimate_ is empty, no map is saved";
         return;
     }
-    pcl::io::savePCDFileBinary(file_path, *map_arranged_);
+    if (map_staticAdynamic->size() > 0){
+        pcl::io::savePCDFileBinary(folder_path + "/erasor_output_whole.pcd", *map_staticAdynamic+*map_arranged_);
+    }
+    pcl::io::savePCDFileBinary(folder_path + "/erasor_output.pcd", *map_arranged_);
 }
 
 template <typename PointT>

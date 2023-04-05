@@ -38,10 +38,7 @@ int main(int argc, char** argv) {
     }
     std::string pcd_parent = argv[1]; // we assume that rawmap is in pcd_parent;
     std::string config_file = argv[2];
-    int cnt = 0, run_max=1;
-    if(argc>3){
-        run_max = std::stoi(argv[3]);
-    }
+    int cnt = 0, run_max = 1 ;
     // check if the config_file exists
     if (!std::filesystem::exists(config_file)) {
         LOG(ERROR) << "Config file does not exist: " << config_file;
@@ -64,7 +61,13 @@ int main(int argc, char** argv) {
     std::sort(filenames.begin(), filenames.end());
 
     int total = filenames.size();
-
+    if(argc>3){
+        run_max = std::stoi(argv[3]);
+        if (run_max == 1) {
+            LOG(INFO) << "We will run all the frame in sequence, the total number is: " << total;
+        }
+    }
+    TIC;
     for (const auto & filename : filenames) {
         std::ostringstream log_msg;
         log_msg << "(" << cnt << "/" << total << ") Processing: " << filename;
@@ -72,24 +75,18 @@ int main(int argc, char** argv) {
 
         if (filename.find(".pcd") == std::string::npos)
             continue;
-        // common::Timer total_t;
-        TIC;
+
         pcl::PointCloud<PointT>::Ptr pcd(new pcl::PointCloud<PointT>);
         pcl::io::loadPCDFile<PointT>(filename, *pcd);
-        TOC("read pcd", 1);
-        // // HARD CODE HERE! add z +1.72 in pcd
-        // for (auto & pt : pcd->points) {
-        //     pt.z -= 1.73;
-        // }
         map_updater.run(pcd);
-        TOC("erasor run", 1);
-
+        
         cnt++;
         if(cnt>run_max)
             break;
+        TOC("erasor run", 1);
     }
     
-    map_updater.saveMap(pcd_parent + "/erasor_output.pcd");
+    map_updater.saveMap(pcd_parent);
     LOG(INFO) << ANSI_GREEN << "Done! " << ANSI_RESET << "Check the output in " << pcd_parent << "/erasor_output.pcd";
     return 0;
 }

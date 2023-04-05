@@ -66,12 +66,11 @@ class ERASOR {
   void setConfig(common::Config& cfg);
 
   void set_inputs(const pcl::PointCloud<pcl::PointXYZI>& map_voi,
-                  const pcl::PointCloud<pcl::PointXYZI>& query_voi,
-                  const double x_cur, const double y_cur);
+                  const pcl::PointCloud<pcl::PointXYZI>& query_voi);
   void compare_vois_and_revert_ground_w_block();
   void get_static_estimate(pcl::PointCloud<pcl::PointXYZI>& arranged,
                            pcl::PointCloud<pcl::PointXYZI>& complement);
-                           
+  void setCenter(double x, double y, double z);
  private:
   pcl::PointCloud<pcl::PointXYZI> piecewise_ground_, non_ground_;
   pcl::PointCloud<pcl::PointXYZI> ground_pc_, non_ground_pc_;
@@ -107,8 +106,8 @@ class ERASOR {
   double th_dist_d_, d_;
   double ring_size;
   double sector_size;
-  double x_cur_, y_cur_;
+  double center_x =0 , center_y=0, center_z=0;
   pcl::PointCloud<pcl::PointXYZI> map_complement;
-  pcl::PointCloud<pcl::PointXYZI> ground_viz;  // Visualized in pcs_v2!
+  pcl::PointCloud<pcl::PointXYZI> dynamic_viz;  // Visualized in pcs_v2!
 };
 }  // namespace benchmark

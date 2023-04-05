@@ -51,7 +51,7 @@ class MapUpdater {
    * map_filtered_ = map_static_estimate + map_egocentric_complement
    */
   typename pcl::PointCloud<PointT>::Ptr map_static_estimate_;
-  typename pcl::PointCloud<PointT>::Ptr map_egocentric_complement_;
+  typename pcl::PointCloud<PointT>::Ptr map_staticAdynamic;
   typename pcl::PointCloud<PointT>::Ptr map_filtered_;
 
   void fetch_VoI(double x_criterion, double y_criterion,

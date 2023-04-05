@@ -23,15 +23,17 @@ void ERASOR::clear(pcl::PointCloud<pcl::PointXYZI> &pt_cloud) {
     pt_cloud.clear();
   }
 }
+void ERASOR::setCenter(double x, double y, double z) {
+  center_x = x;
+  center_y = y;
+  center_z = z;
+}
 /**
  * @brief Inputs should be the transformed pointcloud!
  */
 void ERASOR::set_inputs(const pcl::PointCloud<pcl::PointXYZI> &map_voi,
-                        const pcl::PointCloud<pcl::PointXYZI> &query_voi,
-                        const double x_cur, const double y_cur) {
+                        const pcl::PointCloud<pcl::PointXYZI> &query_voi) {
   TIC;
-  x_cur_ = x_cur;
-  y_cur_ = y_cur;
   clear(map_complement);
   for (int theta = 0; theta < cfg_.num_sectors_; ++theta) {
     for (int r = 0; r < cfg_.num_rings_; ++r) {
@@ -73,10 +75,11 @@ void ERASOR::setConfig(common::Config &cfg) {
 void ERASOR::pt2r_pod(const pcl::PointXYZI &pt, Bin &bin) {
   bin.is_occupied = true;
   bin.points.push_back(pt);
+  
   if (pt.z >= bin.max_h) {
     bin.max_h = pt.z;
-    bin.x = pt.x - x_cur_;
-    bin.y = pt.y - y_cur_;
+    bin.x = pt.x;
+    bin.y = pt.y;
   }
   if (pt.z <= bin.min_h) {
     bin.min_h = pt.z;
@@ -84,15 +87,16 @@ void ERASOR::pt2r_pod(const pcl::PointXYZI &pt, Bin &bin) {
 }
 
 double ERASOR::xy2theta(const double &x, const double &y) {  // 0 ~ 2 * PI
-  if ((y - y_cur_) >= 0) {
-    return atan2(y - y_cur_, x - x_cur_);  // 1, 2 quadrant
+  
+  if ((y-center_y) >= 0) {
+    return atan2(y - center_y, x-center_x);  // 1, 2 quadrant
   } else {
-    return 2 * PI + atan2(y - y_cur_, x - x_cur_);  // 3, 4 quadrant
+    return 2 * PI + atan2(y-center_y, x-center_x);  // 3, 4 quadrant
   }
 }
 
 double ERASOR::xy2radius(const double &x, const double &y) {
-  return sqrt(pow(x - x_cur_, 2) + pow(y - y_cur_, 2));
+  return sqrt(pow(x - center_x, 2) + pow(y - center_y, 2));
 }
 
 void ERASOR::voi2r_pod(const pcl::PointCloud<pcl::PointXYZI> &src,
@@ -139,7 +143,7 @@ void ERASOR::voi2r_pod(const pcl::PointCloud<pcl::PointXYZI> &src, R_POD &r_pod,
 }
 
 void ERASOR::compare_vois_and_revert_ground_w_block() {
-  ground_viz.points.clear();
+  dynamic_viz.points.clear();
 
   for (int theta = 0; theta < cfg_.num_sectors_; theta++) {
     for (int r = 0; r < cfg_.num_rings_; r++) {
@@ -202,10 +206,9 @@ void ERASOR::compare_vois_and_revert_ground_w_block() {
           if (!piecewise_ground_.empty()) piecewise_ground_.clear();
           if (!non_ground_.empty()) non_ground_.clear();
 
-          // TODO!!! Problem is here!!! FIXME !!!!
           extract_ground(bin_map.points, piecewise_ground_, non_ground_);
           r_pod_selected[r][theta].points += piecewise_ground_;
-          ground_viz += piecewise_ground_;
+          dynamic_viz += non_ground_;
 
         } else {
           r_pod_selected[r][theta] = bin_map;
@@ -229,70 +232,6 @@ void ERASOR::compare_vois_and_revert_ground_w_block() {
       }
     }
   }
-}
-
-void ERASOR::r_pod2pc(const R_POD &sc, pcl::PointCloud<pcl::PointXYZI> &pc) {
-  pc.points.clear();
-  for (int theta = 0; theta < cfg_.num_sectors_; theta++) {
-    for (int r = 0; r < cfg_.num_rings_; r++) {
-      if (sc.at(r).at(theta).is_occupied) {
-        for (auto const &pt : sc.at(r).at(theta).points) {
-          pc.points.push_back(pt);
-        }
-      }
-    }
-  }
-}
-
-void ERASOR::get_static_estimate(pcl::PointCloud<pcl::PointXYZI> &arranged,
-                                 pcl::PointCloud<pcl::PointXYZI> &complement) {
-  r_pod2pc(r_pod_selected, arranged);
-  LOG(INFO) << arranged.size() << " points are selected.";
-  // arranged += ground_viz;
-  complement = map_complement;
-}
-
-void ERASOR::init(R_POD &r_pod) {
-  if (!r_pod.empty()) {
-    r_pod.clear();
-  }
-  Ring ring;
-  Bin bin = {-INF, INF, 0, 0, false, static_cast<bool>(NOT_ASSIGNED)};
-  bin.points.reserve(ENOUGH_NUM);
-  for (int i = 0; i < cfg_.num_sectors_; i++) {
-    ring.emplace_back(bin);
-  }
-  for (int j = 0; j < cfg_.num_rings_; j++) {
-    r_pod.emplace_back(ring);
-  }
-}
-
-bool ERASOR::is_dynamic_obj_close(R_POD &r_pod_selected, int r_target,
-                                  int theta_target) {
-  // Set thetas
-  std::vector<int> theta_candidates;
-  for (int j = theta_target - 1; j <= theta_target + 1;
-       j++) {
-    if (j < 0) {
-      theta_candidates.push_back(j + cfg_.num_rings_);
-    } else if (j >= cfg_.num_sectors_) {
-      theta_candidates.push_back(j - cfg_.num_rings_);
-    } else {
-      theta_candidates.push_back(j);
-    }
-  }
-  for (int r = std::max(0, r_target - 1);
-       r <= std::min(r_target + 1, cfg_.num_rings_ - 1); r++) {
-    for (const auto &theta : theta_candidates) {
-      if ((r == r_target) && (theta == theta_target)) continue;
-
-      if (r_pod_selected[r][theta].status ==
-          CURR_IS_HIGHER) {  // Dynamic object is near
-        return true;
-      }
-    }
-  }
-  return false;
 }
 
 bool point_cmp(pcl::PointXYZI a, pcl::PointXYZI b) { return a.z < b.z; }
@@ -345,6 +284,76 @@ void ERASOR::extract_ground(pcl::PointCloud<pcl::PointXYZI> &src,
   dst = ground_pc_;
   outliers = non_ground_pc_;
 }
+
+void ERASOR::r_pod2pc(const R_POD &sc, pcl::PointCloud<pcl::PointXYZI> &pc) {
+  pc.points.clear();
+  for (int theta = 0; theta < cfg_.num_sectors_; theta++) {
+    for (int r = 0; r < cfg_.num_rings_; r++) {
+      if (sc.at(r).at(theta).is_occupied) {
+        for (auto const &pt : sc.at(r).at(theta).points) {
+          pc.points.push_back(pt);
+        }
+      }
+    }
+  }
+}
+
+void ERASOR::get_static_estimate(pcl::PointCloud<pcl::PointXYZI> &arranged,
+                                 pcl::PointCloud<pcl::PointXYZI> &complement) {
+  r_pod2pc(r_pod_selected, arranged);
+  // replace intensity in arranged
+  for (auto &pt : arranged.points) {
+    pt.intensity = 0;
+  }
+  for(auto &pt : dynamic_viz.points) {
+    pt.intensity = 1;
+  }
+  complement += dynamic_viz;
+}
+
+void ERASOR::init(R_POD &r_pod) {
+  if (!r_pod.empty()) {
+    r_pod.clear();
+  }
+  Ring ring;
+  Bin bin = {-INF, INF, 0, 0, false, static_cast<bool>(NOT_ASSIGNED)};
+  bin.points.reserve(ENOUGH_NUM);
+  for (int i = 0; i < cfg_.num_sectors_; i++) {
+    ring.emplace_back(bin);
+  }
+  for (int j = 0; j < cfg_.num_rings_; j++) {
+    r_pod.emplace_back(ring);
+  }
+}
+
+bool ERASOR::is_dynamic_obj_close(R_POD &r_pod_selected, int r_target,
+                                  int theta_target) {
+  // Set thetas
+  std::vector<int> theta_candidates;
+  for (int j = theta_target - 1; j <= theta_target + 1;
+       j++) {
+    if (j < 0) {
+      theta_candidates.push_back(j + cfg_.num_rings_);
+    } else if (j >= cfg_.num_sectors_) {
+      theta_candidates.push_back(j - cfg_.num_rings_);
+    } else {
+      theta_candidates.push_back(j);
+    }
+  }
+  for (int r = std::max(0, r_target - 1);
+       r <= std::min(r_target + 1, cfg_.num_rings_ - 1); r++) {
+    for (const auto &theta : theta_candidates) {
+      if ((r == r_target) && (theta == theta_target)) continue;
+
+      if (r_pod_selected[r][theta].status ==
+          CURR_IS_HIGHER) {  // Dynamic object is near
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
 
 void ERASOR::estimate_plane_(const pcl::PointCloud<pcl::PointXYZI> &ground) {
   Eigen::Matrix3f cov;
