@@ -68,26 +68,28 @@ void MapUpdater<PointT>::run(typename pcl::PointCloud<PointT>::Ptr const& single
     // read pose in VIEWPOINT Field in pcd
     float x_curr = single_pc->sensor_origin_[0];
     float y_curr = single_pc->sensor_origin_[1];
-
+    LOG(INFO) << "x_curr: " << x_curr << ", y_curr: " << y_curr;
     TIC;
     fetch_VoI(x_curr, y_curr, *single_pc); // query_voi_ and map_voi_ are ready in the same world frame
     TOC("fetch_VoI", cfg_.verbose_);
     
     // TRE;
     LOG_IF(INFO, cfg_.verbose_) << "map voi size: " << map_voi_->size() << " query voi: " << query_voi_->size();
-    erasor.set_inputs(*map_voi_, *query_voi_);
+    erasor.set_inputs(*map_voi_, *query_voi_, x_curr, y_curr);
     erasor.compare_vois_and_revert_ground_w_block();
     erasor.get_static_estimate(*map_static_estimate_, *map_egocentric_complement_);
-    
+    LOG_IF(INFO, cfg_.verbose_) << "Static pts num: " << map_static_estimate_->size();
+
+    *map_arranged_ = *map_static_estimate_ + *map_egocentric_complement_;
 }
 template <typename PointT>
 void MapUpdater<PointT>::saveMap(std::string const& file_path) {
     // save map_static_estimate_
-    if (map_static_estimate_->size() == 0) {
+    if (map_arranged_->size() == 0) {
         LOG(WARNING) << "map_static_estimate_ is empty, no map is saved";
         return;
     }
-    pcl::io::savePCDFileBinary(file_path, *map_static_estimate_);
+    pcl::io::savePCDFileBinary(file_path, *map_arranged_);
 }
 
 template <typename PointT>

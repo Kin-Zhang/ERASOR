@@ -32,13 +32,16 @@ int main(int argc, char** argv) {
     FLAGS_colorlogtostderr = true;
     google::SetStderrLogging(google::INFO);
 
-    if (argc != 3) {
+    if (argc < 3) {
         LOG(ERROR) << "Usage: ./erasor_pcd [pcd_folder] [config_file]";
         return 0;
     }
     std::string pcd_parent = argv[1]; // we assume that rawmap is in pcd_parent;
     std::string config_file = argv[2];
-
+    int cnt = 0, run_max=1;
+    if(argc>3){
+        run_max = std::stoi(argv[3]);
+    }
     // check if the config_file exists
     if (!std::filesystem::exists(config_file)) {
         LOG(ERROR) << "Config file does not exist: " << config_file;
@@ -57,11 +60,16 @@ int main(int argc, char** argv) {
     for (const auto & entry : std::filesystem::directory_iterator(std::filesystem::path(pcd_parent) / "pcd")) {
         filenames.push_back(entry.path().string());
     }
+    // sort the filenames
+    std::sort(filenames.begin(), filenames.end());
 
-
-    int cnt = 0, total = filenames.size();
+    int total = filenames.size();
 
     for (const auto & filename : filenames) {
+        std::ostringstream log_msg;
+        log_msg << "(" << cnt << "/" << total << ") Processing: " << filename;
+        LOG(INFO) << log_msg.str();
+
         if (filename.find(".pcd") == std::string::npos)
             continue;
         // common::Timer total_t;
@@ -69,14 +77,16 @@ int main(int argc, char** argv) {
         pcl::PointCloud<PointT>::Ptr pcd(new pcl::PointCloud<PointT>);
         pcl::io::loadPCDFile<PointT>(filename, *pcd);
         TOC("read pcd", 1);
+        // // HARD CODE HERE! add z +1.72 in pcd
+        // for (auto & pt : pcd->points) {
+        //     pt.z -= 1.73;
+        // }
         map_updater.run(pcd);
         TOC("erasor run", 1);
-        std::ostringstream log_msg;
-        log_msg << "(" << cnt << "/" << total << ") Processing: " << filename;
-        LOG(INFO) << log_msg.str();
+
         cnt++;
-        if(cnt>10)
-            break; // TODO
+        if(cnt>run_max)
+            break;
     }
     
     map_updater.saveMap(pcd_parent + "/erasor_output.pcd");

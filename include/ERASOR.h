@@ -66,7 +66,8 @@ class ERASOR {
   void setConfig(common::Config& cfg);
 
   void set_inputs(const pcl::PointCloud<pcl::PointXYZI>& map_voi,
-                  const pcl::PointCloud<pcl::PointXYZI>& query_voi);
+                  const pcl::PointCloud<pcl::PointXYZI>& query_voi,
+                  const double x_cur, const double y_cur);
   void compare_vois_and_revert_ground_w_block();
   void get_static_estimate(pcl::PointCloud<pcl::PointXYZI>& arranged,
                            pcl::PointCloud<pcl::PointXYZI>& complement);
@@ -78,8 +79,7 @@ class ERASOR {
   void extract_ground(pcl::PointCloud<pcl::PointXYZI>& src,
                       pcl::PointCloud<pcl::PointXYZI>& dst,
                       pcl::PointCloud<pcl::PointXYZI>& outliers);
-  bool is_dynamic_obj_close(R_POD& r_pod_selected, int r_target,
-                            int theta_target, int r_range, int theta_range);
+  bool is_dynamic_obj_close(R_POD& r_pod_selected, int r_target, int theta_target);
   void extract_initial_seeds_(const pcl::PointCloud<pcl::PointXYZI>& p_sorted,
                               pcl::PointCloud<pcl::PointXYZI>& init_seeds);
   void estimate_plane_(const pcl::PointCloud<pcl::PointXYZI>& ground);
@@ -107,6 +107,7 @@ class ERASOR {
   double th_dist_d_, d_;
   double ring_size;
   double sector_size;
+  double x_cur_, y_cur_;
   pcl::PointCloud<pcl::PointXYZI> map_complement;
   pcl::PointCloud<pcl::PointXYZI> ground_viz;  // Visualized in pcs_v2!
 };
