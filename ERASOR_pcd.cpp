@@ -42,7 +42,7 @@ int main(int argc, char** argv) {
         LOG(ERROR) << "Config file does not exist: " << config_file;
         return 0;
     }
-    erasor::MapUpdater<PointT> map_updater(config_file);
+    erasor::MapUpdater map_updater(config_file);
 
     // load raw map
     std::string rawmap_path = pcd_parent + "/raw_map.pcd";

@@ -26,7 +26,6 @@
 
 namespace erasor {
 
-template <typename PointT>
 class MapUpdater {
  public:
   MapUpdater(const std::string config_file_path);
@@ -36,26 +35,26 @@ class MapUpdater {
   void setConfig();
   void saveMap(std::string const& file_path);
 
-  void setRawMap(typename pcl::PointCloud<PointT>::Ptr const& raw_map);
-  void run(typename pcl::PointCloud<PointT>::Ptr const& single_pc);
+  void setRawMap(pcl::PointCloud<PointT>::Ptr const& raw_map);
+  void run(pcl::PointCloud<PointT>::Ptr const& single_pc);
   
   benchmark::ERASOR erasor;
   ufo::Timing timing;
   
  private:
   common::Config cfg_;
-  typename pcl::PointCloud<PointT>::Ptr query_voi_;
-  typename pcl::PointCloud<PointT>::Ptr map_voi_;
-  typename pcl::PointCloud<PointT>::Ptr map_outskirts_;
-  typename pcl::PointCloud<PointT>::Ptr map_arranged_;
+  pcl::PointCloud<PointT>::Ptr query_voi_;
+  pcl::PointCloud<PointT>::Ptr map_voi_;
+  pcl::PointCloud<PointT>::Ptr map_outskirts_;
+  pcl::PointCloud<PointT>::Ptr map_arranged_;
 
   /*** Outputs of ERASOR
    * map_filtered_ = map_static_estimate + map_egocentric_complement
    */
-  typename pcl::PointCloud<PointT>::Ptr map_static_estimate_;
-  typename pcl::PointCloud<PointT>::Ptr map_staticAdynamic;
-  typename pcl::PointCloud<PointT>::Ptr map_filtered_;
-  typename pcl::PointCloud<PointT>::Ptr map_egocentric_complement_;
+  pcl::PointCloud<PointT>::Ptr map_static_estimate_;
+  pcl::PointCloud<PointT>::Ptr map_staticAdynamic;
+  pcl::PointCloud<PointT>::Ptr map_filtered_;
+  pcl::PointCloud<PointT>::Ptr map_egocentric_complement_;
 
   void fetch_VoI(double x_criterion, double y_criterion,
                  pcl::PointCloud<PointT>& query_pcd);

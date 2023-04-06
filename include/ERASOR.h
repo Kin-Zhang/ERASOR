@@ -49,7 +49,7 @@ struct Bin {
   double status;
   bool is_occupied;
 
-  pcl::PointCloud<pcl::PointXYZI> points;
+  pcl::PointCloud<PointT> points;
 };
 
 struct DynamicBinIdx {
@@ -67,42 +67,42 @@ class ERASOR {
 
   void setConfig(common::Config& cfg);
 
-  void set_inputs(const pcl::PointCloud<pcl::PointXYZI>& map_voi,
-                  const pcl::PointCloud<pcl::PointXYZI>& query_voi);
+  void set_inputs(const pcl::PointCloud<PointT>& map_voi,
+                  const pcl::PointCloud<PointT>& query_voi);
   void compare_vois_and_revert_ground_w_block();
-  void get_static_estimate(pcl::PointCloud<pcl::PointXYZI>& arranged,
-                           pcl::PointCloud<pcl::PointXYZI>& dynamic_pts,
-                           pcl::PointCloud<pcl::PointXYZI>& complement);
+  void get_static_estimate(pcl::PointCloud<PointT>& arranged,
+                           pcl::PointCloud<PointT>& dynamic_pts,
+                           pcl::PointCloud<PointT>& complement);
                            
   void setCenter(double x, double y, double z);
 
  private:
-  pcl::PointCloud<pcl::PointXYZI> piecewise_ground_, non_ground_;
-  pcl::PointCloud<pcl::PointXYZI> ground_pc_, non_ground_pc_;
+  pcl::PointCloud<PointT> piecewise_ground_, non_ground_;
+  pcl::PointCloud<PointT> ground_pc_, non_ground_pc_;
   void init(R_POD& r_pod);
-  void extract_ground(pcl::PointCloud<pcl::PointXYZI>& src,
-                      pcl::PointCloud<pcl::PointXYZI>& dst,
-                      pcl::PointCloud<pcl::PointXYZI>& outliers);
+  void extract_ground(pcl::PointCloud<PointT>& src,
+                      pcl::PointCloud<PointT>& dst,
+                      pcl::PointCloud<PointT>& outliers);
   bool is_dynamic_obj_close(R_POD& r_pod_selected, int r_target,
                             int theta_target);
-  void extract_initial_seeds_(const pcl::PointCloud<pcl::PointXYZI>& p_sorted,
-                              pcl::PointCloud<pcl::PointXYZI>& init_seeds);
-  void estimate_plane_(const pcl::PointCloud<pcl::PointXYZI>& ground);
+  void extract_initial_seeds_(const pcl::PointCloud<PointT>& p_sorted,
+                              pcl::PointCloud<PointT>& init_seeds);
+  void estimate_plane_(const pcl::PointCloud<PointT>& ground);
 
   void clear_bin(Bin& bin);
-  void clear(pcl::PointCloud<pcl::PointXYZI>& pt_cloud);
+  void clear(pcl::PointCloud<PointT>& pt_cloud);
 
-  void pt2r_pod(const pcl::PointXYZI& pt, Bin& bin);
+  void pt2r_pod(const PointT& pt, Bin& bin);
 
-  void voi2r_pod(const pcl::PointCloud<pcl::PointXYZI>& src, R_POD& r_pod);
+  void voi2r_pod(const pcl::PointCloud<PointT>& src, R_POD& r_pod);
 
-  void voi2r_pod(const pcl::PointCloud<pcl::PointXYZI>& src, R_POD& r_pod,
-                 pcl::PointCloud<pcl::PointXYZI>& complement);
+  void voi2r_pod(const pcl::PointCloud<PointT>& src, R_POD& r_pod,
+                 pcl::PointCloud<PointT>& complement);
 
   double xy2theta(const double& x, const double& y);
 
   double xy2radius(const double& x, const double& y);
-  void r_pod2pc(const R_POD& sc, pcl::PointCloud<pcl::PointXYZI>& pc);
+  void r_pod2pc(const R_POD& sc, pcl::PointCloud<PointT>& pc);
 
   common::Config cfg_;
   R_POD r_pod_map;       // R_POD of Map
@@ -113,8 +113,8 @@ class ERASOR {
   double ring_size;
   double sector_size;
   double center_x = 0, center_y = 0, center_z = 0;
-  pcl::PointCloud<pcl::PointXYZI> map_complement;
-  pcl::PointCloud<pcl::PointXYZI> dynamic_viz;  // Visualized in pcs_v2!
+  pcl::PointCloud<PointT> map_complement;
+  pcl::PointCloud<PointT> dynamic_viz;  // Visualized in pcs_v2!
 
   std::mutex m_data;
 };

@@ -13,8 +13,7 @@
 
 
 namespace erasor {
-template <typename PointT>
-MapUpdater<PointT>::MapUpdater(const std::string config_file_path) {
+MapUpdater::MapUpdater(const std::string config_file_path) {
 
 	yconfig = YAML::LoadFile(config_file_path);
 	MapUpdater::setConfig();
@@ -23,12 +22,12 @@ MapUpdater<PointT>::MapUpdater(const std::string config_file_path) {
 
     // reset
     map_static_estimate_.reset(new pcl::PointCloud<PointT>());
-    map_egocentric_complement_.reset(new pcl::PointCloud<pcl::PointXYZI>());
+    map_egocentric_complement_.reset(new pcl::PointCloud<PointT>());
     map_staticAdynamic.reset(new pcl::PointCloud<PointT>());
     map_filtered_.reset(new pcl::PointCloud<PointT>());
 }
-template <typename PointT>
-void MapUpdater<PointT>::setConfig(){
+
+void MapUpdater::setConfig(){
     cfg_.query_voxel_size_ = yconfig["MapUpdater"]["query_voxel_size"].as<double>();
     cfg_.map_voxel_size_ = yconfig["MapUpdater"]["map_voxel_size"].as<double>();
     cfg_.removal_interval_ = yconfig["MapUpdater"]["removal_interval"].as<int>();
@@ -55,8 +54,8 @@ void MapUpdater<PointT>::setConfig(){
         cfg_.num_lowest_pts = yconfig["erasor"]["num_lowest_pts"].as<int>();
     }
 }
-template <typename PointT>
-void MapUpdater<PointT>::setRawMap(typename pcl::PointCloud<PointT>::Ptr const& raw_map) {
+
+void MapUpdater::setRawMap(pcl::PointCloud<PointT>::Ptr const& raw_map) {
     // copy raw map to map_arranged
     timing.start("0. Read RawMap  ");
     map_arranged_.reset(new pcl::PointCloud<PointT>());
@@ -65,8 +64,8 @@ void MapUpdater<PointT>::setRawMap(typename pcl::PointCloud<PointT>::Ptr const& 
 }
 
 
-template <typename PointT>
-void MapUpdater<PointT>::run(typename pcl::PointCloud<PointT>::Ptr const& single_pc) {
+
+void MapUpdater::run(pcl::PointCloud<PointT>::Ptr const& single_pc) {
     // read pose in VIEWPOINT Field in pcd
     float x_curr = single_pc->sensor_origin_[0];
     float y_curr = single_pc->sensor_origin_[1];
@@ -92,8 +91,8 @@ void MapUpdater<PointT>::run(typename pcl::PointCloud<PointT>::Ptr const& single
 
     *map_arranged_ = *map_static_estimate_ + *map_outskirts_ + *map_egocentric_complement_;
 }
-template <typename PointT>
-void MapUpdater<PointT>::saveMap(std::string const& folder_path) {
+
+void MapUpdater::saveMap(std::string const& folder_path) {
     // save map_static_estimate_
     if (map_arranged_->size() == 0) {
         LOG(WARNING) << "map_static_estimate_ is empty, no map is saved";
@@ -105,8 +104,8 @@ void MapUpdater<PointT>::saveMap(std::string const& folder_path) {
     pcl::io::savePCDFileBinary(folder_path + "/erasor_output.pcd", *map_arranged_);
 }
 
-template <typename PointT>
-void MapUpdater<PointT>::fetch_VoI(
+
+void MapUpdater::fetch_VoI(
         double x_criterion, double y_criterion, pcl::PointCloud<PointT> &query_pcd) {
 
     query_voi_.reset(new pcl::PointCloud<PointT>());
@@ -171,7 +170,7 @@ void MapUpdater<PointT>::fetch_VoI(
 }
 
 // template class MapUpdater<pcl::PointXYZ>;
-template class MapUpdater<pcl::PointXYZI>;
+// template class MapUpdater<pcl::PointXYZI>;
 // template class MapUpdater<pcl::PointXYZRGB>;
 
 }  // namespace erasor

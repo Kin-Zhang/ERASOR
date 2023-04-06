@@ -31,7 +31,7 @@ void ERASOR::clear_bin(Bin &bin) {
   if (!bin.points.empty()) bin.points.clear();
 }
 
-void ERASOR::clear(pcl::PointCloud<pcl::PointXYZI> &pt_cloud) {
+void ERASOR::clear(pcl::PointCloud<PointT> &pt_cloud) {
   if (!pt_cloud.empty()) {
     pt_cloud.clear();
   }
@@ -44,8 +44,8 @@ void ERASOR::setCenter(double x, double y, double z) {
 /**
  * @brief Inputs should be the transformed pointcloud!
  */
-void ERASOR::set_inputs(const pcl::PointCloud<pcl::PointXYZI> &map_voi,
-                        const pcl::PointCloud<pcl::PointXYZI> &query_voi) {
+void ERASOR::set_inputs(const pcl::PointCloud<PointT> &map_voi,
+                        const pcl::PointCloud<PointT> &query_voi) {
   clear(map_complement);
   for (int theta = 0; theta < cfg_.num_sectors_; ++theta) {
     for (int r = 0; r < cfg_.num_rings_; ++r) {
@@ -84,7 +84,7 @@ void ERASOR::setConfig(common::Config &cfg) {
   LOG(INFO) << "ERASOR is initialized";
 }
 
-void ERASOR::pt2r_pod(const pcl::PointXYZI &pt, Bin &bin) {
+void ERASOR::pt2r_pod(const PointT &pt, Bin &bin) {
   bin.is_occupied = true;
   bin.points.push_back(pt);
 
@@ -111,7 +111,7 @@ double ERASOR::xy2radius(const double &x, const double &y) {
   return sqrt(pow(x - center_x, 2) + pow(y - center_y, 2));
 }
 
-void ERASOR::voi2r_pod(const pcl::PointCloud<pcl::PointXYZI> &src,
+void ERASOR::voi2r_pod(const pcl::PointCloud<PointT> &src,
                        R_POD &r_pod) {
   for (auto const &pt : src.points) {
     if (pt.z < cfg_.max_h_ && pt.z > cfg_.min_h_) {
@@ -130,8 +130,8 @@ void ERASOR::voi2r_pod(const pcl::PointCloud<pcl::PointXYZI> &src,
   }
 }
 
-void ERASOR::voi2r_pod(const pcl::PointCloud<pcl::PointXYZI> &src, R_POD &r_pod,
-                       pcl::PointCloud<pcl::PointXYZI> &complement) {
+void ERASOR::voi2r_pod(const pcl::PointCloud<PointT> &src, R_POD &r_pod,
+                       pcl::PointCloud<PointT> &complement) {
   for (auto const &pt : src.points) {
     if (pt.z < cfg_.max_h_ && pt.z > cfg_.min_h_) {  // range of z?
       double r = xy2radius(pt.x, pt.y);
@@ -246,11 +246,11 @@ void ERASOR::compare_vois_and_revert_ground_w_block() {
   }
 }
 
-bool point_cmp(pcl::PointXYZI a, pcl::PointXYZI b) { return a.z < b.z; }
+bool point_cmp(PointT a, PointT b) { return a.z < b.z; }
 
-void ERASOR::extract_ground(pcl::PointCloud<pcl::PointXYZI> &src,
-                            pcl::PointCloud<pcl::PointXYZI> &dst,
-                            pcl::PointCloud<pcl::PointXYZI> &outliers) {
+void ERASOR::extract_ground(pcl::PointCloud<PointT> &src,
+                            pcl::PointCloud<PointT> &dst,
+                            pcl::PointCloud<PointT> &outliers) {
   if (!dst.empty()) dst.clear();
   if (!outliers.empty()) outliers.clear();
 
@@ -299,7 +299,7 @@ void ERASOR::extract_ground(pcl::PointCloud<pcl::PointXYZI> &src,
   outliers = non_ground_pc_;
 }
 
-void ERASOR::r_pod2pc(const R_POD &sc, pcl::PointCloud<pcl::PointXYZI> &pc) {
+void ERASOR::r_pod2pc(const R_POD &sc, pcl::PointCloud<PointT> &pc) {
   pc.points.clear();
   for (int theta = 0; theta < cfg_.num_sectors_; theta++) {
     for (int r = 0; r < cfg_.num_rings_; r++) {
@@ -312,10 +312,10 @@ void ERASOR::r_pod2pc(const R_POD &sc, pcl::PointCloud<pcl::PointXYZI> &pc) {
   }
 }
 
-void ERASOR::get_static_estimate(pcl::PointCloud<pcl::PointXYZI> &arranged,
-                                 pcl::PointCloud<pcl::PointXYZI> &dynamic_pts,
-                                 pcl::PointCloud<pcl::PointXYZI> &complement) {
-  // pcl::PointCloud<pcl::PointXYZI> arranged;
+void ERASOR::get_static_estimate(pcl::PointCloud<PointT> &arranged,
+                                 pcl::PointCloud<PointT> &dynamic_pts,
+                                 pcl::PointCloud<PointT> &complement) {
+  // pcl::PointCloud<PointT> arranged;
   r_pod2pc(r_pod_selected, arranged);
   if(cfg_.replace_intensity){
     // replace intensity in arranged
@@ -376,7 +376,7 @@ bool ERASOR::is_dynamic_obj_close(R_POD &r_pod_selected, int r_target,
   return false;
 }
 
-void ERASOR::estimate_plane_(const pcl::PointCloud<pcl::PointXYZI> &ground) {
+void ERASOR::estimate_plane_(const pcl::PointCloud<PointT> &ground) {
   Eigen::Matrix3f cov;
   Eigen::Vector4f pc_mean;
   pcl::computeMeanAndCovarianceMatrix(ground, cov, pc_mean);
@@ -395,10 +395,10 @@ void ERASOR::estimate_plane_(const pcl::PointCloud<pcl::PointXYZI> &ground) {
 }
 
 void ERASOR::extract_initial_seeds_(
-    const pcl::PointCloud<pcl::PointXYZI> &p_sorted,
-    pcl::PointCloud<pcl::PointXYZI> &init_seeds) {
+    const pcl::PointCloud<PointT> &p_sorted,
+    pcl::PointCloud<PointT> &init_seeds) {
   init_seeds.points.clear();
-  pcl::PointCloud<pcl::PointXYZI> g_seeds_pc;
+  pcl::PointCloud<PointT> g_seeds_pc;
 
   // LPR is the mean of low point representative
   double sum = 0;

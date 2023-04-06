@@ -10,7 +10,8 @@
 
 #pragma once
 #include <iostream>
-
+#include <string>
+#include <pcl/point_types.h>
 #define ANSI_RED "\033[1m\x1b[31m"
 #define ANSI_GREEN "\033[1m\x1b[32m"
 #define ANSI_YELLOW "\033[1m\x1b[33m"
@@ -19,6 +20,11 @@
 #define ANSI_CYAN "\033[1m\x1b[36m"
 #define ANSI_RESET "\x1b[0m"
 #define ANSI_BOLD "\033[1m"
+
+// CHANGE Point Type Here!!! If you want to use XYZI, change to pcl::PointXYZI
+// typedef pcl::PointXYZ PointT;
+typedef pcl::PointXYZI PointT;
+// typedef pcl::PointXYZRGB PointT;
 
 namespace common {
 struct Config {
