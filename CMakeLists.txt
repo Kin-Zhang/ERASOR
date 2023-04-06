@@ -21,9 +21,8 @@ set(LOG_LIB glog::glog gflags)
 
 find_package(Eigen3 REQUIRED)
 find_package(yaml-cpp REQUIRED)
-find_package(Open3D REQUIRED)
 find_package(PCL REQUIRED)
-set(FUN_LIB Open3D::Open3D Eigen3::Eigen)
+set(FUN_LIB Eigen3::Eigen)
 
 #############
 # LIBRARIES #
@@ -36,7 +35,7 @@ target_link_libraries(dufo_lib ${LOG_LIB} yaml-cpp ${FUN_LIB} ${PCL_LIBRARIES})
 # BINARIES #
 ############
 add_executable(erasor_run ERASOR_pcd.cpp)
-target_link_libraries(erasor_run dufo_lib ${PCL_LIBRARIES})
+target_link_libraries(erasor_run dufo_lib)
 
 find_package(OpenMP)
 if(OpenMP_CXX_FOUND)

@@ -21,23 +21,13 @@ Test computer and System:
 
 
 Dependencies:
+### PCL
+
+
 ### glog gflag (only for debug)
 glog gflag for debug only, will remove on release version
 ```sh
 sh -c "$(wget -O- https://raw.githubusercontent.com/Kin-Zhang/Kin-Zhang/main/Dockerfiles/latest_glog_gflag.sh)"
-```
-
-### Open3D 0.16.0
-
-mainly for save the rgb mesh and visualize real-time, if you don't want to install, please just comment the code related to this one
-build from source
-```sh
-git clone --depth 1 --branch v0.16.0 https://github.com/intel-isl/Open3D && cd Open3D 
-# will install the dependencies for open3d itself.
-./util/install_deps_ubuntu.sh
-cmake -DBUILD_EIGEN3=ON -DBUILD_GLEW=ON -DBUILD_GLFW=ON -DBUILD_JSONCPP=ON -DBUILD_PNG=ON -DGLIBCXX_USE_CXX11_ABI=ON -DPYTHON_EXECUTABLE=/usr/bin/python -DBUILD_UNIT_TESTS=ON -Bbuild
-cmake --build build --config Release --parallel `nproc`
-sudo cmake --build build --config Release --target install
 ```
 
 ### yaml-cpp

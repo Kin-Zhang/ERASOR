@@ -14,7 +14,6 @@
 
 // function lib
 #include <glog/logging.h>
-#include <open3d/Open3D.h>
 #include <pcl/io/pcd_io.h>
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>

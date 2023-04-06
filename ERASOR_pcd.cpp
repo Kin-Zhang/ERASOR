@@ -20,10 +20,6 @@
 #include <string>
 #include "MapUpdater.h"
 
-
-using PointT = pcl::PointXYZI;
-// using PointT = pcl::PointXYZRGB;
-
 int main(int argc, char** argv) {
     google::InitGoogleLogging(argv[0]);
     google::InstallFailureSignalHandler();
