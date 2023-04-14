@@ -88,13 +88,13 @@ void ERASOR::pt2r_pod(const PointT &pt, Bin &bin) {
   bin.is_occupied = true;
   bin.points.push_back(pt);
 
-  if (pt.z >= bin.max_h) {
-    bin.max_h = pt.z;
+  if ((pt.z - center_z  + cfg_.tf_z) >= bin.max_h) {
+    bin.max_h = pt.z - center_z  + cfg_.tf_z;
     bin.x = pt.x;
     bin.y = pt.y;
   }
-  if (pt.z <= bin.min_h) {
-    bin.min_h = pt.z;
+  if ((pt.z - center_z  + cfg_.tf_z) <= bin.min_h) {
+    bin.min_h = pt.z - center_z  + cfg_.tf_z;
   }
 }
 
@@ -114,7 +114,7 @@ double ERASOR::xy2radius(const double &x, const double &y) {
 void ERASOR::voi2r_pod(const pcl::PointCloud<PointT> &src,
                        R_POD &r_pod) {
   for (auto const &pt : src.points) {
-    if (pt.z < cfg_.max_h_ && pt.z > cfg_.min_h_) {
+    if ((pt.z - center_z  + cfg_.tf_z) < cfg_.max_h_ && (pt.z - center_z  + cfg_.tf_z) > cfg_.min_h_) {
       double r = xy2radius(pt.x, pt.y);
       if (r <= cfg_.max_range_) {
         double theta = xy2theta(pt.x, pt.y);
@@ -133,7 +133,7 @@ void ERASOR::voi2r_pod(const pcl::PointCloud<PointT> &src,
 void ERASOR::voi2r_pod(const pcl::PointCloud<PointT> &src, R_POD &r_pod,
                        pcl::PointCloud<PointT> &complement) {
   for (auto const &pt : src.points) {
-    if (pt.z < cfg_.max_h_ && pt.z > cfg_.min_h_) {  // range of z?
+    if ((pt.z - center_z  + cfg_.tf_z) < cfg_.max_h_ && (pt.z - center_z  + cfg_.tf_z) > cfg_.min_h_) {  // range of z?
       double r = xy2radius(pt.x, pt.y);
       if (r <= cfg_.max_range_) {
         double theta = xy2theta(pt.x, pt.y);
@@ -156,7 +156,7 @@ void ERASOR::voi2r_pod(const pcl::PointCloud<PointT> &src, R_POD &r_pod,
 
 void ERASOR::compare_vois_and_revert_ground_w_block() {
   dynamic_viz.points.clear();
-
+  ground_viz.points.clear();
 #pragma omp parallel for
   for (int theta = 0; theta < cfg_.num_sectors_; theta++) {
     for (int r = 0; r < cfg_.num_rings_; r++) {
@@ -220,6 +220,7 @@ void ERASOR::compare_vois_and_revert_ground_w_block() {
           if (!non_ground_.empty()) non_ground_.clear();
           extract_ground(bin_map.points, piecewise_ground_, non_ground_);
           r_pod_selected[r][theta].points += piecewise_ground_;
+          ground_viz += piecewise_ground_;
           dynamic_viz += non_ground_;
 
         } else {
@@ -259,7 +260,7 @@ void ERASOR::extract_ground(pcl::PointCloud<PointT> &src,
   // 1. remove_outliers;
   auto it = src_copy.points.begin();
   for (int i = 0; i < src_copy.points.size(); i++) {
-    if (src_copy.points[i].z < cfg_.min_h_)
+    if ((src_copy.points[i].z - center_z  + cfg_.tf_z) < cfg_.min_h_)
       it++;
     else
       break;
@@ -317,6 +318,7 @@ void ERASOR::get_static_estimate(pcl::PointCloud<PointT> &arranged,
                                  pcl::PointCloud<PointT> &complement) {
   // pcl::PointCloud<PointT> arranged;
   r_pod2pc(r_pod_selected, arranged);
+  arranged += ground_viz;
   if(cfg_.replace_intensity){
     // replace intensity in arranged
     for (auto &pt : arranged.points) {
@@ -408,14 +410,14 @@ void ERASOR::extract_initial_seeds_(
 
   for (int i = cfg_.num_lowest_pts;
        i < p_sorted.points.size() && cnt < cfg_.num_lprs_; i++) {
-    sum += p_sorted.points[i].z;
+    sum += (p_sorted.points[i].z - center_z  + cfg_.tf_z);
     cnt++;
   }
   double lpr_height = cnt != 0 ? sum / cnt : 0;  // in case divide by 0
   g_seeds_pc.clear();
   // iterate pointcloud, filter those height is less than lpr.height+th_seeds_
   for (int i = 0; i < p_sorted.points.size(); i++) {
-    if (p_sorted.points[i].z < lpr_height + cfg_.th_seeds_heights_) {
+    if ((p_sorted.points[i].z - center_z  + cfg_.tf_z) < lpr_height + cfg_.th_seeds_heights_) {
       g_seeds_pc.points.push_back(p_sorted.points[i]);
     }
   }

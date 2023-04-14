@@ -13,6 +13,7 @@
 
 
 namespace erasor {
+#define CAR_BODY_SIZE 2.7
 MapUpdater::MapUpdater(const std::string config_file_path) {
 
 	yconfig = YAML::LoadFile(config_file_path);
@@ -28,14 +29,16 @@ MapUpdater::MapUpdater(const std::string config_file_path) {
 }
 
 void MapUpdater::setConfig(){
+    cfg_.tf_z = yconfig["tf"]["lidar2body"][2].as<double>();
+
     cfg_.query_voxel_size_ = yconfig["MapUpdater"]["query_voxel_size"].as<double>();
     cfg_.map_voxel_size_ = yconfig["MapUpdater"]["map_voxel_size"].as<double>();
     cfg_.removal_interval_ = yconfig["MapUpdater"]["removal_interval"].as<int>();
     cfg_.global_voxelization_period_ = yconfig["MapUpdater"]["voxelization_interval"].as<int>();
 
     cfg_.max_range_ = yconfig["erasor"]["max_range"].as<double>();
-    cfg_.min_h_ = yconfig["erasor"]["min_h"].as<double>() - 1.73; // HARD CODE HERE
-    cfg_.max_h_ = yconfig["erasor"]["max_h"].as<double>() - 1.73; // HARD CODE HERE
+    cfg_.min_h_ = yconfig["erasor"]["min_h"].as<double>();// - cfg_.tf_z; // since need to account for the sensor height
+    cfg_.max_h_ = yconfig["erasor"]["max_h"].as<double>();// - cfg_.tf_z;
     cfg_.num_rings_ = yconfig["erasor"]["num_rings"].as<int>();
     cfg_.num_sectors_ = yconfig["erasor"]["num_sectors"].as<int>();
     LOG(INFO) << "number of rings: " << cfg_.num_rings_ << ", number of sectors: " << cfg_.num_sectors_;
@@ -117,7 +120,7 @@ void MapUpdater::fetch_VoI(
         // find query voi
         for (auto const &pt : query_pcd.points) {
             double dist_square = pow(pt.x - x_criterion, 2) + pow(pt.y - y_criterion, 2);
-            if (dist_square < max_dist_square) {
+            if (dist_square < max_dist_square && dist_square > pow(CAR_BODY_SIZE, 2)) {
                 query_voi_->points.emplace_back(pt);
             }
         }
@@ -125,10 +128,10 @@ void MapUpdater::fetch_VoI(
         // find map voi
         for (auto &pt : map_arranged_->points) {
             double dist_square = pow(pt.x - x_criterion, 2) + pow(pt.y - y_criterion, 2);
-            if (dist_square < max_dist_square) {
+            if (dist_square < max_dist_square && dist_square > pow(CAR_BODY_SIZE, 2)) {
                 map_voi_ -> points.emplace_back(pt);
             }
-            else {
+            else if(dist_square > pow(CAR_BODY_SIZE, 2)) { // Since ERASOR produce the data remove the pts near ego
                 if(cfg_.replace_intensity)
                     pt.intensity = 0;
                 map_outskirts_-> points.emplace_back(pt);
@@ -168,9 +171,4 @@ void MapUpdater::fetch_VoI(
     // }
     LOG_IF(INFO, cfg_.verbose_) << map_arranged_->points.size() << " points in the map";
 }
-
-// template class MapUpdater<pcl::PointXYZ>;
-// template class MapUpdater<pcl::PointXYZI>;
-// template class MapUpdater<pcl::PointXYZRGB>;
-
 }  // namespace erasor

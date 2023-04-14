@@ -54,6 +54,9 @@ struct Config {
 
   std::string mode = "naive";
   bool replace_intensity = false;
+
+  // tf lidar to body
+  double tf_z = 0.0;
 };
 
 }  // namespace common

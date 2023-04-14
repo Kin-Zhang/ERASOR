@@ -114,7 +114,7 @@ class ERASOR {
   double sector_size;
   double center_x = 0, center_y = 0, center_z = 0;
   pcl::PointCloud<PointT> map_complement;
-  pcl::PointCloud<PointT> dynamic_viz;  // Visualized in pcs_v2!
+  pcl::PointCloud<PointT> dynamic_viz, ground_viz;  // Visualized in pcs_v2!
 
   std::mutex m_data;
 };
