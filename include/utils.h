@@ -29,8 +29,8 @@ typedef pcl::PointXYZI PointT;
 namespace common {
 struct Config {
   /**< Parameters of MapUpdater*/
-  double query_voxel_size_;
-  double map_voxel_size_;
+  double map_voxel_size_ = 0.2;
+  double query_voxel_size_ = 0.2;
   int global_voxelization_period_;
 
   /**< Params. of Volume of Interest (VoI) */
@@ -59,6 +59,8 @@ struct Config {
   double tf_x = 0.0;
   double tf_y = 0.0;
   double tf_z = 0.0;
+  
+  bool is_large_scale_ = false;
 };
 
 }  // namespace common

@@ -72,12 +72,18 @@ int main(int argc, char** argv) {
             map_updater.timing.start(" One Scan Cost  ");
             map_updater.run(pcd);
             map_updater.timing.stop(" One Scan Cost  ");
-            std::ostringstream log_msg;
-            log_msg << "(" << cnt << "/" << run_max << ") Processing: " << filename << " Time Cost: " 
-                << map_updater.timing.lastSeconds(" One Scan Cost  ") << "s";
-            std::string spaces(10, ' ');
-            log_msg << spaces;
-            std::cout << "\r" <<log_msg.str() << std::flush;
+            if(!map_updater.getCfg().verbose_){
+                std::ostringstream log_msg;
+                log_msg << "(" << cnt << "/" << run_max << ") Processing: " << filename << " Time Cost: " 
+                    << map_updater.timing.lastSeconds(" One Scan Cost  ") << "s";
+                std::string spaces(10, ' ');
+                log_msg << spaces;
+                std::cout << "\r" <<log_msg.str() << std::flush;
+            }
+            else{
+                LOG(INFO) << "(" << cnt << "/" << run_max << ") Processing: " << filename << " Time Cost: " 
+                    << map_updater.timing.lastSeconds(" One Scan Cost  ") << "s";
+            }
         }
         cnt++;
         if(cnt>run_max)

@@ -220,7 +220,8 @@ void ERASOR::compare_vois_and_revert_ground_w_block() {
           if (!non_ground_.empty()) non_ground_.clear();
 
           extract_ground(bin_map.points, piecewise_ground_, non_ground_);
-          r_pod_selected[r][theta].points += piecewise_ground_;
+          // no need for this, or you can insert the highest z and lowest z in piecewise_ground_
+          // r_pod_selected[r][theta].points += piecewise_ground_;
           ground_viz += piecewise_ground_;
           dynamic_viz += non_ground_;
 

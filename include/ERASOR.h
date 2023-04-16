@@ -110,8 +110,7 @@ class ERASOR {
   R_POD r_pod_selected;  // R_POD of current pointcloud
   Eigen::MatrixXf normal_;
   double th_dist_d_, d_;
-  double ring_size;
-  double sector_size;
+  double ring_size, sector_size;
   double center_x = 0, center_y = 0, center_z = 0;
   pcl::PointCloud<PointT> map_complement;
   pcl::PointCloud<PointT> dynamic_viz, ground_viz;  // Visualized in pcs_v2!
