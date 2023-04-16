@@ -61,15 +61,16 @@ I recommend to run 5-10 frames first to check the result, then run the whole seq
 
 Timing print in my desktop setting:
 ```bash
-(141/142) Processing: /home/kin/workspace/DUFOMap/data/KITTI_00/pcd/004530.pcd Time Cost: 1.2844s           
+(140/142) Processing: /home/kin/workspace/DUFOMap/data/KITTI_00/pcd/004529.pcd Time Cost: 0.349648s          
 ERASOR Timings:
          Component              Total   Last    Mean    StDev    Min     Max     Steps
-        0. Read RawMap           0.22   0.2240  0.2240    nan   0.2240  0.2240       1
-        1. Fetch VoI            143.06  0.8902  1.0146  0.0764  0.8853  1.1815     141
-        2. Compare VoI          138.27  0.3425  0.9807  0.3563  0.1422  3.6560     141
-        3. Get StaticPts        33.51   0.0966  0.2377  0.0504  0.0966  0.5702     141
-        4. Write                 0.73   0.7319  0.7319    nan   0.7319  0.7319       1
-I20230405 23:13:17.319449 177500 ERASOR_pcd.cpp:112] Done! Check the output in /home/kin/workspace/DUFOMap/data/KITTI_00/erasor_output.pcd
+         One Scan Cost          17.81   0.3496  0.5089  0.0677  0.3496  0.6520      35
+        0. Read RawMap           0.81   0.8115  0.8115    nan   0.8115  0.8115       1
+        1. Fetch VoI             3.82   0.0938  0.1092  0.0093  0.0842  0.1235      35
+        2. Compare VoI           3.67   0.0291  0.1048  0.0331  0.0291  0.1729      35
+        3. Get StaticPts         0.74   0.0120  0.0211  0.0061  0.0120  0.0438      35
+        4. Write                 0.11   0.1114  0.1114    nan   0.1114  0.1114       1
+I20230416 15:53:23.057607 41439 ERASOR_pcd.cpp:114] Done! Check the output in /home/kin/workspace/DUFOMap/data/KITTI_00/erasor_output.pcd
 ```
 
 ## Demo
