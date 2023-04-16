@@ -63,23 +63,22 @@ int main(int argc, char** argv) {
         }
     }
     for (const auto & filename : filenames) {
-        std::ostringstream log_msg;
-        if(cnt>1){
-            log_msg << "(" << cnt << "/" << run_max << ") Processing: " << filename << " Time Cost: " 
-                << map_updater.timing.lastSeconds("1. Fetch VoI    ") 
-                + map_updater.timing.lastSeconds("2. Compare VoI  ") 
-                + map_updater.timing.lastSeconds("3. Get StaticPts") << "s";
-            std::string spaces(10, ' ');
-            log_msg << spaces;
-            std::cout << "\r" <<log_msg.str() << std::flush;
-        }
-
         if (filename.find(".pcd") == std::string::npos)
             continue;
 
         pcl::PointCloud<PointT>::Ptr pcd(new pcl::PointCloud<PointT>);
         pcl::io::loadPCDFile<PointT>(filename, *pcd);
-        map_updater.run(pcd);
+        if(cnt % map_updater.getCfg().removal_interval_ == 0){
+            map_updater.timing.start(" One Scan Cost  ");
+            map_updater.run(pcd);
+            map_updater.timing.stop(" One Scan Cost  ");
+            std::ostringstream log_msg;
+            log_msg << "(" << cnt << "/" << run_max << ") Processing: " << filename << " Time Cost: " 
+                << map_updater.timing.lastSeconds(" One Scan Cost  ") << "s";
+            std::string spaces(10, ' ');
+            log_msg << spaces;
+            std::cout << "\r" <<log_msg.str() << std::flush;
+        }
         cnt++;
         if(cnt>run_max)
             break;
@@ -89,6 +88,7 @@ int main(int argc, char** argv) {
     map_updater.timing.stop("4. Write        ");
 
     // set print color
+    // map_updater.timing.setColor(" One Scan Cost  ", ufo::Timing::boldYellowColor());
 	map_updater.timing.setColor("0. Read RawMap  ", ufo::Timing::boldYellowColor());
 	map_updater.timing.setColor("1. Fetch VoI    ", ufo::Timing::boldCyanColor());
 	map_updater.timing.setColor("2. Compare VoI  ", ufo::Timing::boldMagentaColor());

@@ -36,7 +36,7 @@ class MapUpdater {
 
   void setRawMap(pcl::PointCloud<PointT>::Ptr const& raw_map);
   void run(pcl::PointCloud<PointT>::Ptr const& single_pc);
-  
+  const common::Config getCfg() { return cfg_; }
   benchmark::ERASOR erasor;
   ufo::Timing timing;
   

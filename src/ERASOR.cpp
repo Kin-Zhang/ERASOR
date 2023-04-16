@@ -218,6 +218,7 @@ void ERASOR::compare_vois_and_revert_ground_w_block() {
 
           if (!piecewise_ground_.empty()) piecewise_ground_.clear();
           if (!non_ground_.empty()) non_ground_.clear();
+
           extract_ground(bin_map.points, piecewise_ground_, non_ground_);
           r_pod_selected[r][theta].points += piecewise_ground_;
           ground_viz += piecewise_ground_;
@@ -248,19 +249,31 @@ void ERASOR::compare_vois_and_revert_ground_w_block() {
 }
 
 bool point_cmp(PointT a, PointT b) { return a.z < b.z; }
-
+void copy_PointCloud2World(pcl::PointCloud<PointT> &src,
+                     pcl::PointCloud<PointT> &dst, double tf_x, double tf_y, double tf_z) {
+  dst.points.reserve(src.points.size());
+  for (auto &p : src.points) {
+    p.x = p.x + tf_x;
+    p.y = p.y + tf_y;
+    p.z = p.z + tf_z;
+    dst.points.push_back(p);
+  }
+}
 void ERASOR::extract_ground(pcl::PointCloud<PointT> &src,
                             pcl::PointCloud<PointT> &dst,
                             pcl::PointCloud<PointT> &outliers) {
   if (!dst.empty()) dst.clear();
   if (!outliers.empty()) outliers.clear();
 
-  auto src_copy = src;
+  
+  pcl::PointCloud<PointT> src_copy;
+  copy_PointCloud2World(src, src_copy, cfg_.tf_x - center_x, cfg_.tf_y - center_y, cfg_.tf_z - center_z);
+
   std::sort(src_copy.points.begin(), src_copy.points.end(), point_cmp);
   // 1. remove_outliers;
   auto it = src_copy.points.begin();
   for (int i = 0; i < src_copy.points.size(); i++) {
-    if ((src_copy.points[i].z - center_z  + cfg_.tf_z) < cfg_.min_h_)
+    if (src_copy.points[i].z  < cfg_.min_h_)
       it++;
     else
       break;
@@ -296,8 +309,9 @@ void ERASOR::extract_ground(pcl::PointCloud<PointT> &src,
       }
     }
   }
-  dst = ground_pc_;
-  outliers = non_ground_pc_;
+  // change src_copy based on the tf and center
+  copy_PointCloud2World(ground_pc_, dst, center_x - cfg_.tf_x, center_y - cfg_.tf_y, center_z - cfg_.tf_z);
+  copy_PointCloud2World(non_ground_pc_, outliers, center_x - cfg_.tf_x, center_y - cfg_.tf_y, center_z - cfg_.tf_z);
 }
 
 void ERASOR::r_pod2pc(const R_POD &sc, pcl::PointCloud<PointT> &pc) {

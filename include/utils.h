@@ -31,7 +31,6 @@ struct Config {
   /**< Parameters of MapUpdater*/
   double query_voxel_size_;
   double map_voxel_size_;
-  int removal_interval_;
   int global_voxelization_period_;
 
   /**< Params. of Volume of Interest (VoI) */
@@ -54,8 +53,11 @@ struct Config {
 
   std::string mode = "naive";
   bool replace_intensity = false;
-
+    int removal_interval_ = 2;
+  
   // tf lidar to body
+  double tf_x = 0.0;
+  double tf_y = 0.0;
   double tf_z = 0.0;
 };
 

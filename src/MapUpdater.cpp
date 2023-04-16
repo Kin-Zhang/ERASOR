@@ -120,7 +120,7 @@ void MapUpdater::fetch_VoI(
         // find query voi
         for (auto const &pt : query_pcd.points) {
             double dist_square = pow(pt.x - x_criterion, 2) + pow(pt.y - y_criterion, 2);
-            if (dist_square < max_dist_square && dist_square > pow(CAR_BODY_SIZE, 2)) {
+            if (dist_square < max_dist_square) {
                 query_voi_->points.emplace_back(pt);
             }
         }
@@ -128,47 +128,16 @@ void MapUpdater::fetch_VoI(
         // find map voi
         for (auto &pt : map_arranged_->points) {
             double dist_square = pow(pt.x - x_criterion, 2) + pow(pt.y - y_criterion, 2);
-            if (dist_square < max_dist_square && dist_square > pow(CAR_BODY_SIZE, 2)) {
+            if (dist_square < max_dist_square) {
                 map_voi_ -> points.emplace_back(pt);
             }
-            else if(dist_square > pow(CAR_BODY_SIZE, 2)) { // Since ERASOR produce the data remove the pts near ego
+            else{
                 if(cfg_.replace_intensity)
                     pt.intensity = 0;
                 map_outskirts_-> points.emplace_back(pt);
             }
         }
-
     }
-    //  else if (mode == "kdtree") {
-    //     PointT searchPoint;
-    //     searchPoint.x = x_criterion;
-    //     searchPoint.x = y_criterion;
-    //     searchPoint.z = 0.5;
-    //     std::cout << "\033[1;32mKDTREE mode " << (*map_arranged_).points.size() << "\033[0m" << std::endl;
-    //     std::vector<int>                     pointIdxRadiusSearch;
-    //     std::vector<float>                   pointRadiusSquaredDistance;
-    //     pcl::KdTreeFLANN<PointT>     kdtree;
-    //     pcl::PointCloud<PointT>::Ptr cloud(new pcl::PointCloud<PointT>);
-    //     *cloud = *map_arranged_;
-    //     kdtree.setInputCloud(cloud);
-
-    //     if (kdtree.radiusSearch(searchPoint, max_range_ + 0.5, pointIdxRadiusSearch, pointRadiusSquaredDistance) > 0) {
-    //         // To get outlier
-    //         std::vector<char> isTrue(map_arranged_->points.size(), false);
-    //         std::cout << "what?? " << pointIdxRadiusSearch.size();
-    //         std::cout << "    " << isTrue.size();
-    //         for (std::size_t i = 0; i < pointIdxRadiusSearch.size(); ++i) {
-    //             auto pt = (*cloud)[pointIdxRadiusSearch[i]];
-    //             map_voi_wrt_origin_->points.emplace_back(pt);
-    //             isTrue[pointIdxRadiusSearch[i]] = true;
-    //         }
-    //         for (size_t      j = 0; j < map_arranged_->points.size(); ++j) {
-    //             if (!isTrue[j]) {
-    //                 outskirts.push_back(map_arranged_->points[j]);
-    //             }
-    //         }
-    //     }
-    // }
     LOG_IF(INFO, cfg_.verbose_) << map_arranged_->points.size() << " points in the map";
 }
 }  // namespace erasor
