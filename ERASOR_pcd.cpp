@@ -41,7 +41,8 @@ int main(int argc, char** argv) {
     erasor::MapUpdater map_updater(config_file);
 
     // load raw map
-    std::string rawmap_path = pcd_parent + "/raw_map.pcd";
+    // but no gt info will be used, it is just for the raw map in methods
+    std::string rawmap_path = pcd_parent + "/gt_cloud.pcd";
     pcl::PointCloud<PointT>::Ptr rawmap(new pcl::PointCloud<PointT>);
     pcl::io::loadPCDFile<PointT>(rawmap_path, *rawmap);
     LOG(INFO) << "Raw map loaded, size: " << rawmap->size();
