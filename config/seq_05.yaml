@@ -18,11 +18,6 @@ erasor:
 
 
 MapUpdater:
-
-    data_name: "05"
-    initial_map_path: "/media/shapelim/UX960NVMe1/kitti_semantic/semantic_KITTI_map/src_0_2_test/05_2350_to_2670_w_interval1_voxel_0.200000.pcd"
-    env: "outdoor"
-    save_path: "/media/shapelim/UX960NVMe1/kitti_semantic/semantic_KITTI_map/src_0_2_test"
     query_voxel_size: 0.1
     map_voxel_size: 0.1
     voxelization_interval: 5

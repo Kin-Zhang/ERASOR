@@ -16,10 +16,6 @@ erasor:
 
 
 MapUpdater:
-    data_name: "autoware"
-    initial_map_path: "/home/kin/bags/autoware/res_odom_lidar/origin_map.pcd"
-    env: "outdoor"
-    save_path: "/home/kin/bags/autoware/res_odom_lidar"
     query_voxel_size: 0.075
     map_voxel_size: 0.075 
     voxelization_interval: 2
