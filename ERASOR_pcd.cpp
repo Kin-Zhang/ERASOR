@@ -42,10 +42,10 @@ int main(int argc, char** argv) {
 
     // load raw map
     // but no gt info will be used, it is just for the raw map in methods
-    std::string rawmap_path = pcd_parent + "/gt_cloud.pcd";
+    std::string rawmap_path = pcd_parent + "/raw_map.pcd";// raw_map
     if(!std::filesystem::exists(rawmap_path)){
-        LOG(WARNING) << "Raw map does not exist: " << rawmap_path << ", we will use the `raw_map`";
-        rawmap_path = pcd_parent + "/raw_map.pcd";
+        LOG(WARNING) << "Raw map does not exist: " << rawmap_path << ", we will try to use the `gt_cloud` only for prior raw map.";
+        rawmap_path = pcd_parent + "/gt_cloud.pcd";
     }
     pcl::PointCloud<PointT>::Ptr rawmap(new pcl::PointCloud<PointT>);
     pcl::io::loadPCDFile<PointT>(rawmap_path, *rawmap);

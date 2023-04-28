@@ -1,4 +1,3 @@
-idx: 450
 erasor: 
     max_range: 60.0
     num_rings: 15
@@ -23,14 +22,7 @@ MapUpdater:
     voxelization_interval: 10
     removal_interval: 5
 
-sensors_on:
-    is_odom_on: true
-    is_pc2_on: true
-
 tf:
      lidar2body: [0.0, 0.0, 1.73, 0, 0.0, 0.0, 1.0] # xyz q_x, q_y, q_z, q_w in order
 
 verbose: false # debug print log etc
-    
-
-
