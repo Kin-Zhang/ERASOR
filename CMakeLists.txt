@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.14)
-project(erasor_noros
+project(erasor_dynamic_map
 	VERSION 1.0.0
-	DESCRIPTION "ERASOR but no ros needed"
+	DESCRIPTION "ERASOR DynamicMap Benchmark"
 	LANGUAGES CXX
 )
 
@@ -35,14 +35,14 @@ set(FUN_LIB Eigen3::Eigen)
 # LIBRARIES #
 #############
 include_directories(include)
-add_library(dufo_lib SHARED src/MapUpdater.cpp src/ERASOR.cpp)
-target_link_libraries(dufo_lib ${LOG_LIB} yaml-cpp ${FUN_LIB} ${PCL_LIBRARIES})
+add_library(dm_lib SHARED src/MapUpdater.cpp src/ERASOR.cpp)
+target_link_libraries(dm_lib ${LOG_LIB} yaml-cpp ${FUN_LIB} ${PCL_LIBRARIES})
 
 ############
 # BINARIES #
 ############
 add_executable(erasor_run ERASOR_pcd.cpp)
-target_link_libraries(erasor_run dufo_lib)
+target_link_libraries(erasor_run dm_lib)
 
 find_package(OpenMP)
 if(OpenMP_CXX_FOUND)
