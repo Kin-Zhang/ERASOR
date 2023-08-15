@@ -37,7 +37,7 @@ struct Config {
   double max_range_;
   int num_rings_, num_sectors_;
   double min_h_, max_h_;
-  double th_bin_max_h, scan_ratio_threshold;
+  double scan_ratio_threshold;
 
   double submap_size_;
   double submap_center_x_;

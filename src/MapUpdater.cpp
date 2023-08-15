@@ -48,7 +48,6 @@ void MapUpdater::setConfig(){
     cfg_.num_rings_ = yconfig["erasor"]["num_rings"].as<int>();
     cfg_.num_sectors_ = yconfig["erasor"]["num_sectors"].as<int>();
     
-    cfg_.th_bin_max_h = yconfig["erasor"]["th_bin_max_h"].as<double>();
     cfg_.scan_ratio_threshold = yconfig["erasor"]["scan_ratio_threshold"].as<double>();
 
     cfg_.minimum_num_pts = yconfig["erasor"]["minimum_num_pts"].as<int>();

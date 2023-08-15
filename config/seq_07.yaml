@@ -4,15 +4,13 @@ erasor:
     num_sectors: 108
     min_h: -0.8 # [m] Note that it depends on the distance between body frame and ground contact point of mobile robots
     max_h: 3.1 # [m] Note that it depends on the distance between body frame and ground contact point of mobile robots
-    th_bin_max_h: 0.2 # [m]
     scan_ratio_threshold: 0.20 # The Larger, the more aggressive!!
     minimum_num_pts: 6
-    rejection_ratio: 0
+
     gf_dist_thr: 0.125
     gf_iter: 3
     gf_num_lpr: 10
     gf_th_seeds_height: 0.5
-    version: 3 # 2: R-GPF / 3: R-GPF w/ blocking (not in paper)
     num_lowest_pts: 1
 
 
@@ -26,5 +24,3 @@ tf:
      lidar2body: [0.0, 0.0, 1.73, 0, 0.0, 0.0, 1.0] # xyz q_x, q_y, q_z, q_w in order
 
 verbose: false # debug print log etc
-
-
